@@ -1,4 +1,5 @@
-% 2243716 MEng Project 
+% 2243716 MEng Project 2020/21
+% Refactored By Sarah Swinton starting 05/10/21
 % Fault Tolerant Coordination of Multiple Rovers for Planetary Exploration
 %---------------------------------------------------------------------%
 clc; clear all; clf;
