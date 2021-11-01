@@ -3,9 +3,8 @@
 % Sarah Swinton 
 % 2243716S
 % Initially Created: 08/10/21
-clear all
+clear
 %---------------------------------------%
-
 %% Instantiation of Required Classes 
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity)
 rover{1} = activeRover(1, [1, 1], [1, 2], 0.01);
@@ -27,3 +26,15 @@ rover{10} = referenceRover(5,[5,1],[5,5],0.01);
 stepSize = 0.01;            
 commsInterval = 0.01;       
 endTime = 100;   
+
+%% Online Path Following - Dynamic Segment
+for time = 0:stepSize:endTime
+    % Carry Out Simulation For Each Rover 
+    for n = 1:1:length(rover)
+        %----------------------------------%
+        % Data Storage
+        if rem(stepSize,commsInterval) == 0
+        end
+        %----------------------------------%
+    end
+end
