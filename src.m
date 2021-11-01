@@ -9,7 +9,7 @@ clear all
 %% Instantiation of Required Classes 
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity)
 rover{1} = activeRover(1, [1, 1], [2, 2], 0.01);
-% rover{2} = referenceRover(1, [1, 1], [2, 2], 0.01);
+rover{2} = referenceRover(1, [1, 1], [2, 2], 0.01);
 % 
 % rover{3} = activeRover(2,{2,1},0.1);
 % rover{4} = referenceRover(2,{2,1},0.1);

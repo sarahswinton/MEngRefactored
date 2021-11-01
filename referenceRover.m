@@ -8,7 +8,7 @@ classdef referenceRover < objRover
     end
     
     methods
-        function obj = referenceRover(inputArg1,inputArg2)
+        function obj = untitled(inputArg1,inputArg2)
             %REFERENCEROVER Construct an instance of this class
             %   Detailed explanation goes here
             obj.Property1 = inputArg1 + inputArg2;
