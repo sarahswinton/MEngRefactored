@@ -7,13 +7,29 @@
 classdef objRover
     % Attributes (changeable, visible to user)
     properties 
-        roverId = 0             % Fix this later 
-        startPoint = [0 0]
-        targetPoint = [0 0]
+        % User Defined Properties
+        roverId = 0;             
+        startPoint = [0 0];
+        targetPoint = [0 0];
         xo = [0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0]; 
         xodot = [0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0]; 
-        flags = [0 0 0]
-        desiredVelocity = 0.01
+        flags = [0 0 0];
+        desiredVelocity = 0.01;
+        
+        % GNC Properties
+        waypointCounter = 1;
+        filteredPsi = 0;
+        dFilteredPsi = 0;   
+        state = 0;              
+        psiLast= 0;    
+        accumulate = 0;     
+        accumulation = 0;
+        eVelPrevious = 0; 
+        eVelIntegral = 0;
+        ePsiPrevious = 0;
+        ePsiIntegral = 0;
+        pathComplete = 0;  
+
     end 
     
     % Attributes (unchangable, non-visible to user)

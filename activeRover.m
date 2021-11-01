@@ -4,7 +4,15 @@ classdef activeRover < objRover
     %   Detailed explanation goes here
     
     properties
-        Property1
+        % FDIR Properties 
+        diagnosedFaultMode = 0; 
+        faultMode = 0;
+        faultInjectionTime = 0;
+        residualPosition = 0;
+        faultDetected = 0; 
+        faultDetectedPrev = 0;
+        faultIsolated = 0;
+        detectionTime= 0;  
     end
     
     methods
