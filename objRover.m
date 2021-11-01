@@ -7,13 +7,13 @@
 classdef objRover
     % Attributes (changeable, visible to user)
     properties 
-        roverId(1, 1) double {mustBeInteger, mustBePositive} 
-        startPoint(2, 1) double 
-        targetPoint(2, 1) double
-        xo = [0;0;0;0;0;0;startPoint(1);startPoint(2);0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0]; 
+        roverId = 0             % Fix this later 
+        startPoint = [0 0]
+        targetPoint = [0 0]
+        xo = [0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0]; 
         xodot = [0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0]; 
-        flags(3, 1) {mustBeInteger}
-        desiredVelocity(1, 1) double {mustBeInteger, mustBePositive}
+        flags = [0 0 0]
+        desiredVelocity = 0.01
     end 
     
     % Attributes (unchangable, non-visible to user)
@@ -34,6 +34,8 @@ classdef objRover
             obj.startPoint = startPoint;
             obj.targetPoint = targetPoint;
             obj.desiredVelocity = desiredVelocity;
+            obj.xo(7) = startPoint(1);
+            obj.xo(8) = startPoint(2);
         end
         
         function findVelocity(obj)
@@ -69,7 +71,7 @@ classdef objRover
                 
         end 
 
-        function integralSegment(obj, modelname, x, h, u)
+        function rk4intFunction(obj, modelname, x, h, u)
             %   Integrate rover states using rk4int
             %   x is xo (i.e. the xcurr matrix)
             %   h is the step size
