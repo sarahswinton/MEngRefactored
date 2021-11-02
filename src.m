@@ -36,5 +36,40 @@ for time = 0:stepSize:endTime
         if rem(stepSize,commsInterval) == 0
         end
         %----------------------------------%
+        
+
+        %----------------------------------%
+        % LOS Navigation
+
+        % findVelocity(rover{n})
+        % findWaypoint(rover{n})
+        % checkForObstacles(rover{n})
+        % findLOSAngle(rover{n})
+        % avoidObstacles(rover{n})
+        % mapPsi(rover{n})
+        %----------------------------------%
+
+
+        %----------------------------------%
+        % Control Section
+
+        % headingController(rover{n});
+        % velocityController(rover{n});
+        %----------------------------------%
+
+
+        %----------------------------------%
+        % Derivative Section 
+
+        % rover{x}.xodot = roverModel(rover{n});
+        %----------------------------------%
+
+
+        %----------------------------------%
+        % Integral Section
+        
+        % rover{n}.xo = rk4int(rover{n});
+        %----------------------------------%
+
     end
 end
