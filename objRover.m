@@ -28,8 +28,11 @@ classdef objRover
         eVelIntegral = 0;
         ePsiPrevious = 0;
         ePsiIntegral = 0;
+        errorMappedPsi = 0;
         pathComplete = 0;  
         modelName = 0;
+        psiCS = 0;
+        
     end 
     
     % Attributes (unchangable, non-visible to user)
@@ -80,9 +83,17 @@ classdef objRover
 
         end 
         
-        function evalDesiredHeading(obj)
+        function obj = headingControl(obj, headingGains, h)
             %   Evaluate and update the heading of the rover object
-            
+            %   errorMappedPsi,ePsiIntegral,ePsiPrevious,stepSize
+            psiKp = headingGains(1); 
+            psiKi = headingGains(2);
+            psiKd = headingGains(3); 
+            ePsi = obj.errorMappedPsi;
+            obj.ePsiIntegral = obj.ePsiIntegral + ePsi*h;
+            ePsiDerivative = (ePsi - obj.ePsiPrevious)/h;
+            obj.psiCS = (psiKp * ePsi)  + (psiKi * obj.ePsiIntegral) + (psiKd * ePsiDerivative);
+            obj.ePsiPrevious = ePsi;
         end 
 
         function evalControlSignal(obj)

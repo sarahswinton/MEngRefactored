@@ -25,7 +25,12 @@ rover{10} = referenceRover(5,[5,1],[5,5],0.01, "Four Wheel");
 %% Simulation Initial Conditions
 stepSize = 0.01;            
 commsInterval = 0.01;       
-endTime = 100;   
+endTime = 10;   
+
+% Control Gains: [Kp, Ki, Kd]
+headingGains = [45; 3; 0.75];
+velocityGains = [3; 13.75; 0]; 
+
 
 %% Online Path Following - Dynamic Segment
 for time = 0:stepSize:endTime
@@ -53,8 +58,8 @@ for time = 0:stepSize:endTime
         %----------------------------------%
         % Control Section
 
-        % headingController(rover{n});
-        % velocityController(rover{n});
+        test = headingControl(rover{n}, headingGains, stepSize);
+        % anotherTest = velocityController(rover{n}, velocityGains, stepSize);
         %----------------------------------%
 
 
@@ -68,7 +73,7 @@ for time = 0:stepSize:endTime
         %----------------------------------%
         % Integral Section
         % Temporary u value: 
-        u = [0;0];
+        u = [rover{n}.psiCS;0];
         rover{n}.xo = rk4int(rover{n},stepSize,u);
         %----------------------------------%
 
