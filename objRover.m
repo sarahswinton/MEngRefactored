@@ -29,7 +29,7 @@ classdef objRover
         ePsiPrevious = 0;
         ePsiIntegral = 0;
         pathComplete = 0;  
-
+        modelName = 0;
     end 
     
     % Attributes (unchangable, non-visible to user)
@@ -44,14 +44,22 @@ classdef objRover
 
     % Methods (inherited by all rover sub-classes) 
     methods
-        function obj = objRover(roverId, startPoint, targetPoint, desiredVelocity)
-            %   Construct an instance of the rover class
+        function obj = objRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
+            % Construct an instance of the rover class
             obj.roverId = roverId;
             obj.startPoint = startPoint;
             obj.targetPoint = targetPoint;
             obj.desiredVelocity = desiredVelocity;
             obj.xo(7) = startPoint(1);
             obj.xo(8) = startPoint(2);
+
+            % Set Rover Type - this should be aapted so there are only 2
+            % valid options.
+            if roverType == "Four Wheel"
+                obj.modelName = "fourWheelModel";
+            elseif roverType == "Rocker Bogie"
+                obj.modelName = "rockerBogieModel";
+            end
         end
         
         function findVelocity(obj)
@@ -87,16 +95,16 @@ classdef objRover
                 
         end 
 
-        function rk4intFunction(obj, modelname, x, h, u)
+        function xo = rk4int(obj, h, u)
             %   Integrate rover states using rk4int
             %   x is xo (i.e. the xcurr matrix)
             %   h is the step size
             %   u is the control signal
-            k1 = h*feval(modelname, x, u);              % evaluate derivative k1
-            k2 = h*feval(modelname, x+k1/2, u);         % evaluate derivative k2
-            k3 = h*feval(modelname, x+k2/2, u);         % evaluate derivative k3
-            k4 = h*feval(modelname, x+k3, u);		    % evaluate derivative k4
-            obj.xo = x + (k1 + 2*k2 + 2*k3 + k4)/6;		% averaged output
+            k1 = h*feval(obj.modelName, obj.xo, u);              % evaluate derivative k1
+            k2 = h*feval(obj.modelName, obj.xo+k1/2, u);         % evaluate derivative k2
+            k3 = h*feval(obj.modelName, obj.xo+k2/2, u);         % evaluate derivative k3
+            k4 = h*feval(obj.modelName, obj.xo+k3, u);		    % evaluate derivative k4
+            xo = obj.xo + (k1 + 2*k2 + 2*k3 + k4)/6;		% averaged output
         end 
 
     end

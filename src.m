@@ -7,20 +7,20 @@ clear
 %---------------------------------------%
 %% Instantiation of Required Classes 
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity)
-rover{1} = activeRover(1, [1, 1], [1, 2], 0.01);
-rover{2} = referenceRover(1, [1, 1], [1, 2], 0.01);
+rover{1} = activeRover(1, [1, 1], [1, 2], 0.01, "Four Wheel");
+rover{2} = referenceRover(1, [1, 1], [1, 2], 0.01, "Four Wheel");
 
-rover{3} = activeRover(2,[2,1],[2,2],0.01);
-rover{4} = referenceRover(2,[2,1],[2,2],0.01);
+rover{3} = activeRover(2,[2,1],[2,2],0.01, "Four Wheel");
+rover{4} = referenceRover(2,[2,1],[2,2],0.01, "Four Wheel");
 
-rover{5} = activeRover(3,[3,1],[3,3],0.01); 
-rover{6} = referenceRover(3,[3,1],[3,3],0.01); 
+rover{5} = activeRover(3,[3,1],[3,3],0.01, "Four Wheel"); 
+rover{6} = referenceRover(3,[3,1],[3,3],0.01, "Four Wheel"); 
 
-rover{7} = activeRover(4,[4,1],[4,4],0.01);
-rover{8} = referenceRover(4,[4,1],[4,4],0.01);
+rover{7} = activeRover(4,[4,1],[4,4],0.01, "Four Wheel");
+rover{8} = referenceRover(4,[4,1],[4,4],0.01, "Four Wheel");
 
-rover{9} = activeRover(5,[5,1],[5,5],0.01); 
-rover{10} = referenceRover(5,[5,1],[5,5],0.01); 
+rover{9} = activeRover(5,[5,1],[5,5],0.01, "Four Wheel"); 
+rover{10} = referenceRover(5,[5,1],[5,5],0.01, "Four Wheel"); 
 
 %% Simulation Initial Conditions
 stepSize = 0.01;            
@@ -67,8 +67,9 @@ for time = 0:stepSize:endTime
 
         %----------------------------------%
         % Integral Section
-        
-        % rover{n}.xo = rk4int(rover{n});
+        % Temporary u value: 
+        u = [0;0];
+        rover{n}.xo = rk4int(rover{n},stepSize,u);
         %----------------------------------%
 
     end
