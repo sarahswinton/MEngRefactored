@@ -59,7 +59,7 @@ for time = 0:stepSize:endTime
         % Control Section
 
         test = headingControl(rover{n}, headingGains, stepSize);
-        % anotherTest = velocityController(rover{n}, velocityGains, stepSize);
+        anotherTest = velocityControl(rover{n}, velocityGains, stepSize);
         %----------------------------------%
 
 

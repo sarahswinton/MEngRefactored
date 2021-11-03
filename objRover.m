@@ -32,6 +32,7 @@ classdef objRover
         pathComplete = 0;  
         modelName = 0;
         psiCS = 0;
+        velCS = 0;
         
     end 
     
@@ -86,19 +87,28 @@ classdef objRover
         function obj = headingControl(obj, headingGains, h)
             %   Evaluate and update the heading of the rover object
             %   errorMappedPsi,ePsiIntegral,ePsiPrevious,stepSize
-            psiKp = headingGains(1); 
-            psiKi = headingGains(2);
-            psiKd = headingGains(3); 
-            ePsi = obj.errorMappedPsi;
-            obj.ePsiIntegral = obj.ePsiIntegral + ePsi*h;
-            ePsiDerivative = (ePsi - obj.ePsiPrevious)/h;
-            obj.psiCS = (psiKp * ePsi)  + (psiKi * obj.ePsiIntegral) + (psiKd * ePsiDerivative);
-            obj.ePsiPrevious = ePsi;
+            Kp = headingGains(1); 
+            Ki = headingGains(2);
+            Kd = headingGains(3); 
+            e = obj.errorMappedPsi;
+            obj.ePsiIntegral = obj.ePsiIntegral + e*h;
+            eDerivative = (e - obj.ePsiPrevious)/h;
+            obj.psiCS = (Kp * e)  + (Ki * obj.ePsiIntegral) + (Kd * eDerivative);
+            obj.ePsiPrevious = e;
         end 
 
-        function evalControlSignal(obj)
+        function obj = velocityControl(obj, velocityGains, h)
             %   Evaluate and update the heading of the rover object
-            
+            %   errorMappedPsi,ePsiIntegral,ePsiPrevious,stepSize
+            Kp = velocityGains(1); 
+            Ki = velocityGains(2);
+            Kd = velocityGains(3); 
+
+            e = obj.desiredVelocity - obj.xo(24);
+            obj.eVelIntegral = obj.eVelIntegral + e*h;
+            eDerivative = (e - obj.eVelPrevious)/h;
+            obj.velCS = (Kp * e)  + (Ki * obj.eVelIntegral) + (Kd * eDerivative);
+            obj.eVelPrevious = e;
         end 
 
         function derivativeSegment(obj)
