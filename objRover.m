@@ -33,7 +33,7 @@ classdef objRover
         modelName = 0;
         psiCS = 0;
         velCS = 0;
-        waypoints = [0;0];      % temporary value 
+        waypoints = [0,1;0,1];      % temporary value 
         
     end 
     
@@ -44,7 +44,6 @@ classdef objRover
         obsSafeRadius = 0.2;
         rovSafetyFactor = 3.5 
         rovSafeRadius = 0.35;
-        acceptanceRadius = 0.175;
     end
 
     % Methods (inherited by all rover sub-classes) 
@@ -115,6 +114,32 @@ classdef objRover
 
             end 
         end 
+
+        function waypointIncrementer(obj, distanceToWaypoint, visibleObstacles)
+            % Evaluate relevant acceptance radius
+            if obj.modelName == "fourWheelModel"
+                acceptanceRadius = 0.175;
+            else
+                acceptanceRadius = 2;   % Dummy value
+            end 
+
+            % Find if either visible obs or the rover are within this 
+            % Bug: fix so this can handle multiple visible obstacles
+            distanceToObs = zeros(length(visibleObstacles),1);
+            for i = 1:1:length(visibleObstacles)
+                xDelta = visibleObstacles(1)-obj.waypoints(1,obj.waypointCounter);
+                yDelta = visibleObstacles(2)-obj.waypoints(2,obj.waypointCounter);
+                obsRange = sqrt((xDelta)^2+(yDelta)^2);
+                distanceToObs(i) = obsRange;
+            end
+
+            % if so, increment obj.waypointCounter
+            if (distanceToWaypoint <= acceptanceRadius) 
+                obj.waypointCounter = obj.waypointCounter + 1;
+            elseif (min(distanceToObs) <= acceptanceRadius)
+                obj.waypointCounter = obj.waypointCounter + 1;
+            end 
+        end
         
         function obj = headingControl(obj, headingGains, h)
             %   Evaluate and update the heading of the rover object

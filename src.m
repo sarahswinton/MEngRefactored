@@ -36,6 +36,9 @@ obsNumber = 1;
 obsLocation(1,:) = [2,2];
 obsLocation(2,:) = [1,5];
 
+% Guidance
+
+
 
 
 %% Online Path Following - Dynamic Segment
@@ -56,15 +59,18 @@ for time = 0:stepSize:endTime
         findVelocity(rover{n});
         
         % Find the distance between the rover and it's current waypoint
-        distanceToWaypoint(rover{n});
+        range = distanceToWaypoint(rover{n});
         
-        % Find the rover's desired heading to it's current waypoint
-        psiDesired = findDesiredHeading(rover{n});
         
         % Check for any visible obstacles
         visibleObstacles = checkForObstacles(rover{n},obsNumber,obsLocation);
 
-        % findWaypoint(rover{n})
+        % Increment waypoint if necessary
+        waypointIncrementer(rover{n}, range, visibleObstacles); 
+        
+        % Find the rover's desired heading to it's current waypoint
+        psiDesired = findDesiredHeading(rover{n});
+
         % findLOSAngle(rover{n})
         % avoidObstacles(rover{n})
         % mapPsi(rover{n})
