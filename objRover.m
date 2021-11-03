@@ -33,6 +33,7 @@ classdef objRover
         modelName = 0;
         psiCS = 0;
         velCS = 0;
+        waypoints = [0;0];      % temporary value 
         
     end 
     
@@ -68,20 +69,51 @@ classdef objRover
         
         function findVelocity(obj)
             %   Evaluate and update the velocity of the rover object
-            resultantVelocity = sqrt((obj.xo(1,1)^2 + (obj.xo(2,1)^2)));
+            resultantVelocity = sqrt((obj.xo(1)^2 + (obj.xo(2)^2)));
             obj.xo(24,1) = resultantVelocity;
         end
 
-        function evalCheckpoint(obj)
-            %   Evaluate whether or not the current checkpoint should be
-            %   incremented. 
-
+        function distance = distanceToWaypoint(obj)
+            %   Find the distance from the rover to it's next checkpoint.
+            xDelta = obj.waypoints(1,obj.waypointCounter)-obj.xo(7);
+            yDelta = obj.waypoints(2,obj.waypointCounter)-obj.xo(8);
+            distance = sqrt((yDelta)^2+(xDelta)^2);
         end 
 
-        function obsAvoidance(obj)
-            %   Evaluate whether obstacle avoidance is required. If so,
-            %   adjust the rover's desired heading accordingly. 
+        function psiDesired = findDesiredHeading(obj)
+            % Find the desire heading from the rover to its waypoint
+            xDelta = obj.waypoints(1,obj.waypointCounter)-obj.xo(7);
+            yDelta = obj.waypoints(2,obj.waypointCounter)-obj.xo(8);
+            psiDesired = atan2(yDelta, xDelta);
 
+        end
+
+        function visibleObstacles = checkForObstacles(obj, obsNumber, obsLocation)
+            % Set visbile obstacle to be empty
+            visibleObstacles = [];
+
+            % Check each obstacle to see if it's visible
+            for i = 1:1:obsNumber
+                % Find range of obstacle to Rover
+                xDelta = obsLocation(1,i)-obj.xo(7);
+                yDelta = obsLocation(2,i)-obj.xo(8);
+                obsRange = sqrt((xDelta)^2+(yDelta)^2);
+
+                % Find LOS angle between obstacle and rover
+                psiObs =  atan2(yDelta,xDelta);
+                visionAngle = abs(obj.xo(12)-psiObs);
+
+                % Ensure [-pi,pi] boundary visionAngle issues are resolved
+                if abs(obj.xo(12)) >= (0.95*pi)
+                    visionAngle = abs(abs(psiNow)-abs(psiObs));
+                end
+
+                % Detect if objects are 'visible'
+                if (obsRange <= 3)  && (visionAngle <= 1.0472) % i.e. only adjust heading if in danger of collision
+                    visibleObstacles(end+1,:) = obsLocation(:,i);
+                end
+
+            end 
         end 
         
         function obj = headingControl(obj, headingGains, h)

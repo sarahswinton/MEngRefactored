@@ -6,7 +6,7 @@
 clear
 %---------------------------------------%
 %% Instantiation of Required Classes 
-% rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity)
+% rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
 rover{1} = activeRover(1, [1, 1], [1, 2], 0.01, "Four Wheel");
 rover{2} = referenceRover(1, [1, 1], [1, 2], 0.01, "Four Wheel");
 
@@ -31,6 +31,12 @@ endTime = 10;
 headingGains = [45; 3; 0.75];
 velocityGains = [3; 13.75; 0]; 
 
+% Obstacles
+obsNumber = 1;
+obsLocation(1,:) = [2,2];
+obsLocation(2,:) = [1,5];
+
+
 
 %% Online Path Following - Dynamic Segment
 for time = 0:stepSize:endTime
@@ -46,9 +52,19 @@ for time = 0:stepSize:endTime
         %----------------------------------%
         % LOS Navigation
 
-        % findVelocity(rover{n})
+        % Find the rover's current velocity
+        findVelocity(rover{n});
+        
+        % Find the distance between the rover and it's current waypoint
+        distanceToWaypoint(rover{n});
+        
+        % Find the rover's desired heading to it's current waypoint
+        psiDesired = findDesiredHeading(rover{n});
+        
+        % Check for any visible obstacles
+        visibleObstacles = checkForObstacles(rover{n},obsNumber,obsLocation);
+
         % findWaypoint(rover{n})
-        % checkForObstacles(rover{n})
         % findLOSAngle(rover{n})
         % avoidObstacles(rover{n})
         % mapPsi(rover{n})
@@ -58,8 +74,8 @@ for time = 0:stepSize:endTime
         %----------------------------------%
         % Control Section
 
-        test = headingControl(rover{n}, headingGains, stepSize);
-        anotherTest = velocityControl(rover{n}, velocityGains, stepSize);
+        headingControl(rover{n}, headingGains, stepSize);
+        velocityControl(rover{n}, velocityGains, stepSize);
         %----------------------------------%
 
 
