@@ -179,6 +179,21 @@ classdef objRover
                 end
             end
         end 
+
+        function mapPsi(obj,psiLOS,stepSize)
+            xDelta = obj.waypoints(1,obj.waypointCounter)-obj.xo(7);
+            yDelta = obj.waypoints(2,obj.waypointCounter)-obj.xo(8);
+            %   Mapping of Psi
+            [obj.accumulate,obj.state] = Psi_Mapper_Corrected(psiLOS,obj.psiLast, obj.state, xDelta, yDelta);
+            obj.accumulation = obj.accumulation + obj.accumulate; 
+            if obj.accumulation >= 2*pi
+                obj.accumulation = obj.accumulation -2*pi;
+            end
+            obj.psiLast = psiLOS;
+            [obj.filteredPsi, obj.dFilteredPsi] = Psi_Filter(obj.natFrequency, obj.accumulation, obj.filteredPsi, obj.dFilteredPsi, stepSize);
+            psiLOS = obj.filteredPsi - obj.xo(12); 
+            obj.errorMappedPsi = Psi_Mapper_ToPi(psiLOS);   
+        end 
         
         function obj = headingControl(obj, headingGains, h)
             %   Evaluate and update the heading of the rover object
@@ -207,9 +222,7 @@ classdef objRover
             obj.eVelPrevious = e;
         end 
 
-        function derivativeSegment(obj)
-            %   Evaluate and update the heading of the rover object
-                
+        function derivativeSegment(obj) 
         end 
 
         function xo = rk4int(obj, h, u)

@@ -73,7 +73,8 @@ for time = 0:stepSize:endTime
         % Adjust the rover's LOS Angle to enable obstacle avoidance
         LOSAngle = adjustForObstacles(rover{n}, visibleObstacles, LOSAngle);
 
-        % mapPsi(rover{n})
+        % Map the desired heading value
+        mapPsi(rover{n}, LOSAngle, stepSize)
         %----------------------------------%
 
 
@@ -95,7 +96,7 @@ for time = 0:stepSize:endTime
         %----------------------------------%
         % Integral Section
         % Temporary u value: 
-        u = [rover{n}.psiCS;0];
+        u = [rover{n}.psiCS;rover{n}.velCS];
         rover{n}.xo = rk4int(rover{n},stepSize,u);
         %----------------------------------%
 
