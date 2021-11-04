@@ -61,18 +61,18 @@ for time = 0:stepSize:endTime
         % Find the distance between the rover and it's current waypoint
         range = distanceToWaypoint(rover{n});
         
-        
         % Check for any visible obstacles
         visibleObstacles = checkForObstacles(rover{n},obsNumber,obsLocation);
 
         % Increment waypoint if necessary
         waypointIncrementer(rover{n}, range, visibleObstacles); 
         
-        % Find the rover's desired heading to it's current waypoint
-        psiDesired = findDesiredHeading(rover{n});
+        % Find the rover's LOS Angle it's current waypoint
+        LOSAngle = findLOSAngle(rover{n});
+        
+        % Adjust the rover's LOS Angle to enable obstacle avoidance
+        LOSAngle = adjustForObstacles(rover{n}, visibleObstacles, LOSAngle);
 
-        % findLOSAngle(rover{n})
-        % avoidObstacles(rover{n})
         % mapPsi(rover{n})
         %----------------------------------%
 

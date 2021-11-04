@@ -79,13 +79,6 @@ classdef objRover
             distance = sqrt((yDelta)^2+(xDelta)^2);
         end 
 
-        function psiDesired = findDesiredHeading(obj)
-            % Find the desire heading from the rover to its waypoint
-            xDelta = obj.waypoints(1,obj.waypointCounter)-obj.xo(7);
-            yDelta = obj.waypoints(2,obj.waypointCounter)-obj.xo(8);
-            psiDesired = atan2(yDelta, xDelta);
-
-        end
 
         function visibleObstacles = checkForObstacles(obj, obsNumber, obsLocation)
             % Set visbile obstacle to be empty
@@ -109,7 +102,8 @@ classdef objRover
 
                 % Detect if objects are 'visible'
                 if (obsRange <= 3)  && (visionAngle <= 1.0472) % i.e. only adjust heading if in danger of collision
-                    visibleObstacles(end+1,:) = obsLocation(:,i);
+                    obsData = [obsLocation(1,i), obsLocation(2,i),visionAngle,psiObs];
+                    visibleObstacles(end+1,:) = obsData;
                 end
 
             end 
@@ -140,6 +134,51 @@ classdef objRover
                 obj.waypointCounter = obj.waypointCounter + 1;
             end 
         end
+
+        function psiLOS = findLOSAngle(obj)
+            % Find the desire heading from the rover to its waypoint
+            xDelta = obj.waypoints(1,obj.waypointCounter)-obj.xo(7);
+            yDelta = obj.waypoints(2,obj.waypointCounter)-obj.xo(8);
+            psiLOS = atan2(yDelta, xDelta);
+
+        end
+
+        function psiLOS = adjustForObstacles(obj, visibleObstacles, psiLOS)
+            % Check each visible obstacle 
+            for i = 1:1:height(visibleObstacles)
+                % Calculate range to object
+                obsRange = sqrt((visibleObstacles(i,1))^2+(visibleObstacles(i,2))^2);
+                visionAngle = visibleObstacles(i,3);
+                psiObs = visibleObstacles(i,4);
+
+                % Take evasive action if obstacle is on path
+                if obsRange <= 1 && (visionAngle <=0.610865) % +- 35 degrees
+                    if (obj.xo(12) <= psiObs) && (psiLOS < pi/2) && (psiLOS >= 0)
+                    psiLOS = psiObs - atan((obj.obsSafeRadius*obj.safetyFactor)/obsRange);
+                    elseif (obj.xo(12) > psiObs) && (psiLOS < pi/2) && (psiLOS >= 0)
+                    psiLOS = psiObs + atan((obj.obsSafeRadius*obj.safetyFactor)/obsRange);
+                    elseif (obj.xo(12) <= psiObs) && (psiLOS >= pi/2) && (psiLOS < pi)
+                    psiLOS = psiObs - atan((obj.obsSafeRadius*obj.safetyFactor)/obsRange);
+                    elseif (obj.xo(12) > psiObs) && (psiLOS >= pi/2) && (psiLOS < pi)
+                    psiLOS = psiObs + atan((obj.obsSafeRadius*obj.safetyFactor)/obsRange);
+                    elseif (obj.xo(12) <= psiObs) && (psiLOS >= pi)
+                    psiLOS = psiObs - atan((obj.obsSafeRadius*obj.safetyFactor)/obsRange);
+                    elseif (obj.xo(12) > psiObs) && (psiLOS >= pi)
+                    psiLOS = psiObs + atan((obj.obsSafeRadius*obj.safetyFactor)/obsRange);
+                    elseif (obj.xo(12) <= psiObs) && (psiLOS >= -pi/2) && (psiLOS < 0) 
+                    psiLOS = psiObs - atan((obj.obsSafeRadius*obj.safetyFactor)/obsRange);
+                    elseif (obj.xo(12) > psiObs) && (psiLOS >= -pi/2) && (psiLOS < 0) 
+                    psiLOS = psiObs + atan((obj.obsSafeRadius*obj.safetyFactor)/obsRange);
+                    elseif (obj.xo(12) <= psiObs) && (psiLOS < -pi/2)&& (psiObs < -pi/2)
+                    psiLOS = psiObs - atan((obj.obsSafeRadius*obj.safetyFactor)/obsRange);
+                    elseif (obj.xo(12) > psiObs) && (psiLOS < -pi/2) && (psiObs < -pi/2) 
+                    psiLOS = psiObs + atan((obj.obsSafeRadius*obj.safetyFactor)/obsRange);
+                    elseif (obj.xo(12) <= psiObs) && (psiLOS < -pi/2) && (sign(psiObs) ~= sign(psiLOS)) && visionAngle <= 0.349066
+                    psiLOS = psiLOS - atan((obj.obsSafeRadius*(1/visionAngle))/obsRange);     
+                    end
+                end
+            end
+        end 
         
         function obj = headingControl(obj, headingGains, h)
             %   Evaluate and update the heading of the rover object
