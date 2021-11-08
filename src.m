@@ -25,8 +25,13 @@ rover{1} = activeRover(1, [1, 1], [8, 6], 0.01, "Four Wheel");
 %% Simulation Initial Conditions
 stepSize = 0.01;            
 commsInterval = 0.01;       
-endTime = 1000;   
+endTime = 100;   
 i = 0;
+
+% Data Output 
+timeSteps = endTime/stepSize;
+stateOutput = zeros(24,timeSteps,length(rover));
+timeOutput = zeros(timeSteps,length(rover));
 
 % Control Gains: [Kp, Ki, Kd]
 headingGains = [45; 3; 0.75];
@@ -54,7 +59,12 @@ for time = 0:stepSize:endTime
         %----------------------------------%
         % Data Storage
         if rem(stepSize,commsInterval) == 0
-            i = i + 1;
+            % increment counter after each rover has been processed for the
+            % current time step
+            if n == 1
+                i = i + 1;
+            end
+            % Store state 
             stateOutput(:,i,n) = rover{n}.xo;
             timeOutput(i,n) = time;
         end
@@ -72,9 +82,18 @@ for time = 0:stepSize:endTime
         
         % Check for any visible obstacles
         visibleObstacles = checkForObstacles(rover{n},obsNumber,obsLocation);
+                  
+        % Find if either visible obs or the rover are within acceptance radius 
+        distanceToObs = zeros(length(visibleObstacles),1);
+        for j = 1:1:length(visibleObstacles)
+            xDelta = visibleObstacles(1)-rover{n}.waypoints(1,rover{n}.waypointCounter);
+            yDelta = visibleObstacles(2)-rover{n}.waypoints(2,rover{n}.waypointCounter);
+            obsRange = sqrt((xDelta)^2+(yDelta)^2);
+            distanceToObs(j) = obsRange;
+        end
 
-        % Increment waypoint if necessary
-        waypointIncrementer(rover{n}, range, visibleObstacles); 
+        % Increment waypoint if necessary 
+        waypointIncrementer(rover{n}, range, min(distanceToObs)); 
         
         % Find the rover's LOS Angle it's current waypoint
         LOSAngle = findLOSAngle(rover{n});

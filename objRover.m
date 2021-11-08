@@ -113,7 +113,7 @@ classdef objRover < handle
             end 
         end 
 
-        function waypointIncrementer(obj, distanceToWaypoint, visibleObstacles)
+        function waypointIncrementer(obj, distanceToWaypoint, distanceToObs)
             % Evaluate relevant acceptance radius
             if obj.modelName == "fourWheelModel"
                 acceptanceRadius = 0.175;
@@ -121,19 +121,10 @@ classdef objRover < handle
                 acceptanceRadius = 2;   % Dummy value
             end 
 
-            % Find if either visible obs or the rover are within radius 
-            distanceToObs = zeros(length(visibleObstacles),1);
-            for i = 1:1:length(visibleObstacles)
-                xDelta = visibleObstacles(1)-obj.waypoints(1,obj.waypointCounter);
-                yDelta = visibleObstacles(2)-obj.waypoints(2,obj.waypointCounter);
-                obsRange = sqrt((xDelta)^2+(yDelta)^2);
-                distanceToObs(i) = obsRange;
-            end
-
             % if so, increment obj.waypointCounter
             if (distanceToWaypoint <= acceptanceRadius) 
                 obj.waypointCounter = obj.waypointCounter + 1;
-            elseif (min(distanceToObs) <= acceptanceRadius)
+            elseif (distanceToObs <= acceptanceRadius)
                 obj.waypointCounter = obj.waypointCounter + 1;
             end 
         end
