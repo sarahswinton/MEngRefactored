@@ -47,10 +47,13 @@ obsLocation(2,:) = 10;
 %% Path Planning
 
 % Generate Waypoints
-waypoints = [3,5,7;2,3,4];
+waypoints(1) = [3,5,7;2,3,4];
 
 % Assign Waypoints To Rovers 
-assignWaypoints(rover{1}, waypoints);
+    % Requried functionality: assignment of different waypoints arrays
+for roverNo = 1:1:length(rover)
+    assignWaypoints(rover{roverNo}, waypoints);
+end
 
 %% Online Path Following - Dynamic Segment
 for time = 0:stepSize:endTime
