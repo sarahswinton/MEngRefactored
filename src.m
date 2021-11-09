@@ -179,9 +179,9 @@ end
 %% Terminal Segment 
 
 % Data Prep: Remove zeros from the end of the stateOutput Array
+lastFullColumn = zeros(width(rover),1);
 for n = 1:1:width(rover)
-    lastFullColumn = roverInactive(n,2); 
-    stateData.n = stateOutput(:,(1:lastFullColumn),n);
+    lastFullColumn(n) = roverInactive(n,2); 
 end
 
 % Plot rovers within 2D Martian Environment    
@@ -210,9 +210,14 @@ for obsNo = 1:1:width(obsLocation)
     plot(xObsRad.obsNo,yObsRad.obsNo, 'b')
 end
 plot(obsLocation(1,:),obsLocation(2,:), 'o','MarkerSize',5, 'MarkerFaceColor',[0.75, 0, 0.75])
-% Plotting Path of the First Rover
+% Plot rover waypoints
 plot(waypoints(1,:),waypoints(2,:), "ko")
-plot(stateData.n(7,:,1),stateData.n(8,:,1), "r-")
+% Plot rover paths 
+for roverNo = 1:1:width(rover)
+    plot(waypoints(1,:,roverNo),waypoints(2,:,roverNo), "ko")
+    plot(stateOutput(7,(1:lastFullColumn),roverNo),stateOutput(8,(1:lastFullColumn),roverNo), "r-")
+    hold on
+end
 xlabel("X Position (m)")
 ylabel("Y Position (m)")
 legend('','','','','','','','','','','', 'Waypoints','Measured Path')
