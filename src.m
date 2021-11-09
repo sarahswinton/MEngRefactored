@@ -149,10 +149,9 @@ end
 
 %% Terminal Segment 
 % Data Prep: Remove zeros from the end of the stateOutput Array
-% Note: last full row should be 9475
 for n = 1:1:width(rover)
     lastFullColumn = roverInactive(n,2); 
-    stateOutput_1 = stateOutput(:,(1:lastFullColumn),n);
+    stateData.n = stateOutput(:,(1:lastFullColumn),n);
 end
 
 % Plotting Path of the First Rover
@@ -160,7 +159,7 @@ clf
 figure(1)
 plot(waypoints(1,:),waypoints(2,:), "ko");
 hold on
-plot(stateOutput_1(7,:,1),stateOutput_1(8,:,1), "r-")
+plot(stateData.n(7,:,1),stateData.n(8,:,1), "r-")
 xlabel("X Position (m)")
 ylabel("Y Position (m)")
 legend("Desired Path","Measured Path")
