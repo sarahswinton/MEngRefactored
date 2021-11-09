@@ -39,14 +39,50 @@ velocityGains = [3; 13.75; 0];
 
 % Obstacles
 obsNumber = 1;
-obsLocation(1,:) = 10;
-obsLocation(2,:) = 10;
+obsLocation(1,:) = 20;
+obsLocation(2,:) = 14;
 
 % Guidance
 % Store rover ativity status and time at onset of inactivity
 % roverInactive(n,1): 1 = Inactive, 0 = Active
 % roverInactive(n,2): timestep at onset of activity 
-roverInactive = zeros(length(rover),2);       
+roverInactive = zeros(length(rover),2);      
+
+%% Environment Initialisation
+    %%% Plotting Environment for paths 
+    clf 
+    hold on 
+    % Define map variables 
+xBoundary = 25;
+yBoundary = 25;
+% Define obstacles and terrain objects 
+obsXOne = [0 0 5 5];
+obsYOne = [3 25 25 7];
+obsXTwo = [8 10 15 15];
+obsYTwo = [0 18 20 0];
+obsXThree = [5 5 25 25];
+obsYThree = [24 25 25 24];
+obsXFour =[24 24 25 25];   
+obsYFour = [0 24 24 0];     
+rockFieldX = [15 15 24 24]; 
+rockFieldY = [10 15 18 13];
+steepSlopeXOne = [0 0 6 6]; 
+steepSlopeYOne = [2 24 24 6];
+steepSlopeXTwo = [7 9 15.5 16 ]; 
+steepSlopeYTwo = [0 19 21 0];
+steepSlopeXThree = [6 6 25 25]; 
+steepSlopeYThree = [23.5 25 25 23.5];
+steepSlopeXFour = [23 23 25 25]; 
+steepSlopeYFour = [0 23.5 23.5 0];
+obstacleOneP = polyshape(obsXOne, obsYOne);
+obstacleTwoP = polyshape(obsXTwo, obsYTwo);
+obstacleThreeP = polyshape(obsXThree, obsYThree);
+obstacleFourP = polyshape(obsXFour, obsYFour);
+rockField = polyshape(rockFieldX,rockFieldY);
+steepSlopeOne = polyshape(steepSlopeXOne, steepSlopeYOne);
+steepSlopeTwo = polyshape(steepSlopeXTwo, steepSlopeYTwo);
+steepSlopeThree = polyshape(steepSlopeXThree, steepSlopeYThree);
+steepSlopeFour = polyshape(steepSlopeXFour, steepSlopeYFour);
 
 %% Path Planning
 
@@ -154,15 +190,37 @@ for n = 1:1:width(rover)
     stateData.n = stateOutput(:,(1:lastFullColumn),n);
 end
 
-% Plotting Path of the First Rover
+% Plot 2D Martian Environment    
 clf
 figure(1)
+axis([0 xBoundary 0 yBoundary])
+xlabel('X Position (m)','fontsize',14)
+ylabel('Y Position (m)','fontsize',14)
+grid on 
+hold on
+% Plot environment objects
+plot(steepSlopeOne, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+plot(steepSlopeTwo, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+plot(steepSlopeThree, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+plot(steepSlopeFour, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+plot(obstacleOneP, 'FaceColor', 'black', 'FaceAlpha', 0.8) 
+plot(obstacleTwoP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
+plot(obstacleThreeP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
+plot(obstacleFourP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
+plot(rockField, 'FaceColor', 'green', 'FaceAlpha', 0.4)
+% Plot Obstacles
+th = 0:pi/50:2*pi;
+for obsNo = 1:1:width(obsLocation)
+    xObsRad.obsNo = rover{1}.obsSafeRadius * cos(th) + obsLocation(1,obsNo);
+    yObsRad.obsNo = rover{1}.obsSafeRadius * sin(th) + obsLocation(2,obsNo);
+    plot(xObsRad.obsNo,yObsRad.obsNo, 'b');
+end
+plot(obsLocation(1,:),obsLocation(2,:), 'o','MarkerSize',5, 'MarkerFaceColor',[0.75, 0, 0.75]);
+% Plotting Path of the First Rover
 plot(waypoints(1,:),waypoints(2,:), "ko");
 hold on
 plot(stateData.n(7,:,1),stateData.n(8,:,1), "r-")
 xlabel("X Position (m)")
 ylabel("Y Position (m)")
-legend("Desired Path","Measured Path")
-xlim([0 10])
-ylim([0 10])
+legend('','','','','','','','','','','', 'Waypoints','Measured Path')
 
