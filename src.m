@@ -76,15 +76,17 @@ steepSlopeFour = polyshape(steepSlopeXFour, steepSlopeYFour);
 
 %% Path Planning
 
-% Generate Waypoints
-waypoints(:,:,1) = [2;1.5];
-waypoints(:,:,2) = [3;1.5];
-waypoints(:,:,3) = [4;1.5];
-waypoints(:,:,4) = [5;1.5];
-waypoints(:,:,5) = [6;1.5];
+% Generate Manual Waypoints
+% waypoints(:,:,1) = [2;1.5];
+% waypoints(:,:,2) = [3;1.5];
+% waypoints(:,:,3) = [4;1.5];
+% waypoints(:,:,4) = [5;1.5];
+% waypoints(:,:,5) = [6;1.5];
+
+% Prioritised Planning 
+[waypoints(1,:,1),waypoints(2,:,1)] = RRTStarOOP(rover{1});
 
 % Assign Waypoints To Rovers 
-    % Requried functionality: assignment of different waypoints arrays
 for roverNo = 1:1:length(rover)
     assignWaypoints(rover{roverNo}, waypoints(:,:,roverNo));
 end
