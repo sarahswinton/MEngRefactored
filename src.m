@@ -7,20 +7,13 @@ clear
 %---------------------------------------%
 %% Instantiation of Required Classes 
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
-rover{1} = activeRover(1, [1, 1], [8, 6], 0.01, "Four Wheel");
+rover{1} = activeRover(1, [1, 1], [18, 1], 0.01, "Four Wheel");
+rover{2} = activeRover(1, [2, 1], [19, 1], 0.01, "Four Wheel");
+rover{3} = activeRover(1, [3, 1], [20, 1], 0.01, "Four Wheel");
+rover{4} = activeRover(1, [4, 1], [21, 1], 0.01, "Four Wheel");
+rover{5} = activeRover(1, [5, 1], [22, 1], 0.01, "Four Wheel");
+
 % rover{2} = referenceRover(1, [1, 1], [1, 2], 0.01, "Four Wheel");
-% 
-% rover{3} = activeRover(2,[2,1],[2,2],0.01, "Four Wheel");
-% rover{4} = referenceRover(2,[2,1],[2,2],0.01, "Four Wheel");
-% 
-% rover{5} = activeRover(3,[3,1],[3,3],0.01, "Four Wheel"); 
-% rover{6} = referenceRover(3,[3,1],[3,3],0.01, "Four Wheel"); 
-% 
-% rover{7} = activeRover(4,[4,1],[4,4],0.01, "Four Wheel");
-% rover{8} = referenceRover(4,[4,1],[4,4],0.01, "Four Wheel");
-% 
-% rover{9} = activeRover(5,[5,1],[5,5],0.01, "Four Wheel"); 
-% rover{10} = referenceRover(5,[5,1],[5,5],0.01, "Four Wheel"); 
 
 %% Simulation Initial Conditions
 stepSize = 0.01;            
@@ -49,10 +42,7 @@ obsLocation(2,:) = 14;
 roverInactive = zeros(length(rover),2);      
 
 %% Environment Initialisation
-    %%% Plotting Environment for paths 
-    clf 
-    hold on 
-    % Define map variables 
+% Define map variables 
 xBoundary = 25;
 yBoundary = 25;
 % Define obstacles and terrain objects 
@@ -87,13 +77,16 @@ steepSlopeFour = polyshape(steepSlopeXFour, steepSlopeYFour);
 %% Path Planning
 
 % Generate Waypoints
-%waypoints = [1.5,3,5,7;1.5,2,3,4];
-waypoints = [2;1.5];
+waypoints(:,:,1) = [2;1.5];
+waypoints(:,:,2) = [3;1.5];
+waypoints(:,:,3) = [4;1.5];
+waypoints(:,:,4) = [5;1.5];
+waypoints(:,:,5) = [6;1.5];
 
 % Assign Waypoints To Rovers 
     % Requried functionality: assignment of different waypoints arrays
 for roverNo = 1:1:length(rover)
-    assignWaypoints(rover{roverNo}, waypoints);
+    assignWaypoints(rover{roverNo}, waypoints(:,:,roverNo));
 end
 
 %% Online Path Following - Dynamic Segment
@@ -184,13 +177,14 @@ for time = 0:stepSize:endTime
 end
 
 %% Terminal Segment 
+
 % Data Prep: Remove zeros from the end of the stateOutput Array
+lastFullColumn = zeros(width(rover),1);
 for n = 1:1:width(rover)
-    lastFullColumn = roverInactive(n,2); 
-    stateData.n = stateOutput(:,(1:lastFullColumn),n);
+    lastFullColumn(n) = roverInactive(n,2); 
 end
 
-% Plot 2D Martian Environment    
+% Plot rovers within 2D Martian Environment    
 clf
 figure(1)
 axis([0 xBoundary 0 yBoundary])
@@ -213,14 +207,17 @@ th = 0:pi/50:2*pi;
 for obsNo = 1:1:width(obsLocation)
     xObsRad.obsNo = rover{1}.obsSafeRadius * cos(th) + obsLocation(1,obsNo);
     yObsRad.obsNo = rover{1}.obsSafeRadius * sin(th) + obsLocation(2,obsNo);
-    plot(xObsRad.obsNo,yObsRad.obsNo, 'b');
+    plot(xObsRad.obsNo,yObsRad.obsNo, 'b')
 end
-plot(obsLocation(1,:),obsLocation(2,:), 'o','MarkerSize',5, 'MarkerFaceColor',[0.75, 0, 0.75]);
-% Plotting Path of the First Rover
-plot(waypoints(1,:),waypoints(2,:), "ko");
-hold on
-plot(stateData.n(7,:,1),stateData.n(8,:,1), "r-")
+plot(obsLocation(1,:),obsLocation(2,:), 'o','MarkerSize',5, 'MarkerFaceColor',[0.75, 0, 0.75])
+% Plot rover waypoints
+plot(waypoints(1,:),waypoints(2,:), "ko")
+% Plot rover paths 
+for roverNo = 1:1:width(rover)
+    plot(waypoints(1,:,roverNo),waypoints(2,:,roverNo), "ko")
+    plot(stateOutput(7,(1:lastFullColumn),roverNo),stateOutput(8,(1:lastFullColumn),roverNo), "r-")
+    hold on
+end
 xlabel("X Position (m)")
 ylabel("Y Position (m)")
 legend('','','','','','','','','','','', 'Waypoints','Measured Path')
-
