@@ -7,11 +7,11 @@ clear
 %---------------------------------------%
 %% Instantiation of Required Classes 
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
-rover{1} = activeRover(1, [1, 1], [18, 1], 0.01, "Four Wheel");
-rover{2} = activeRover(1, [2, 1], [19, 1], 0.01, "Four Wheel");
-rover{3} = activeRover(1, [3, 1], [20, 1], 0.01, "Four Wheel");
-rover{4} = activeRover(1, [4, 1], [21, 1], 0.01, "Four Wheel");
-rover{5} = activeRover(1, [5, 1], [22, 1], 0.01, "Four Wheel");
+rover{1} = activeRover(1, [1, 1], [18, 1], 0.1, "Four Wheel");
+rover{2} = activeRover(1, [2, 1], [19, 1], 0.1, "Four Wheel");
+rover{3} = activeRover(1, [3, 1], [20, 1], 0.1, "Four Wheel");
+rover{4} = activeRover(1, [4, 1], [21, 1], 0.1, "Four Wheel");
+rover{5} = activeRover(1, [5, 1], [22, 1], 0.1, "Four Wheel");
 
 % rover{2} = referenceRover(1, [1, 1], [1, 2], 0.01, "Four Wheel");
 
@@ -39,7 +39,11 @@ obsLocation(2,:) = 14;
 % Store rover ativity status and time at onset of inactivity
 % roverInactive(n,1): 1 = Inactive, 0 = Active
 % roverInactive(n,2): timestep at onset of activity 
-roverInactive = zeros(length(rover),2);      
+roverInactive = zeros(length(rover),2);   
+
+% Path Planning
+plannedArrivalTime = zeros(length(rover),1);
+plannedPathLength = zeros(length(rover),1);
 
 %% Environment Initialisation
 % Define map variables 
@@ -84,7 +88,18 @@ steepSlopeFour = polyshape(steepSlopeXFour, steepSlopeYFour);
 % waypoints(:,:,5) = [6;1.5];
 
 % Prioritised Planning 
-[waypoints(1,:,1),waypoints(2,:,1)] = RRTStarOOP(rover{1});
+for roverNo = 1:1:length(rover)
+    if roverNo ==1 
+        [waypoints(1,:,roverNo),waypoints(2,:,roverNo)] = RRTStarOOP(rover{roverNo});
+        [plannedXOut(:,:,roverNo),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:,roverNo),waypoints(2,:,roverNo), rover{roverNo});
+    else
+%         [waypoints(1,:,roverNo),waypoints(2,:,roverNo)] = RRTStarOOP(rover{roverNo});
+%         [plannedXOut(:,:,roverNo),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:,roverNo),waypoints(2,:,roverNo), rover{roverNo});
+%         for n = roverNo:-1:1
+% 
+%         end 
+    end 
+end
 
 % Assign Waypoints To Rovers 
 for roverNo = 1:1:length(rover)
