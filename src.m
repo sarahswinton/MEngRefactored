@@ -11,14 +11,14 @@ rover{1} = activeRover(1, [1, 1], [18, 1], 0.1, "Four Wheel");
 rover{2} = activeRover(1, [2, 1], [19, 1], 0.1, "Four Wheel");
 rover{3} = activeRover(1, [3, 1], [20, 1], 0.1, "Four Wheel");
 rover{4} = activeRover(1, [4, 1], [21, 1], 0.1, "Four Wheel");
-rover{5} = activeRover(1, [5, 1], [22, 1], 0.1, "Four Wheel");
+%rover{5} = activeRover(1, [5, 1], [22, 1], 0.1, "Four Wheel");
 
 % rover{2} = referenceRover(1, [1, 1], [1, 2], 0.01, "Four Wheel");
 
 %% Simulation Initial Conditions
 stepSize = 0.01;            
 commsInterval = 0.01;       
-endTime = 100;   
+endTime = 700;   
 i = 0;
 
 % Data Output 
@@ -90,11 +90,20 @@ steepSlopeFour = polyshape(steepSlopeXFour, steepSlopeYFour);
 % Prioritised Planning 
 for roverNo = 1:1:length(rover)
     if roverNo ==1 
-        [waypoints(1,:,roverNo),waypoints(2,:,roverNo)] = RRTStarOOP(rover{roverNo});
-        [plannedXOut(:,:,roverNo),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:,roverNo),waypoints(2,:,roverNo), rover{roverNo});
-    else
-%         [waypoints(1,:,roverNo),waypoints(2,:,roverNo)] = RRTStarOOP(rover{roverNo});
-%         [plannedXOut(:,:,roverNo),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:,roverNo),waypoints(2,:,roverNo), rover{roverNo});
+        [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
+        assignWaypoints(rover{roverNo}, waypoints);
+        [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
+        plannedPath{roverNo}.xLocation = plannedXOut(7,:);
+        plannedPath{roverNo}.yLocation = plannedXOut(8,:);
+        plannedXOut = [];
+    else    
+        waypoints = [];
+        [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
+        assignWaypoints(rover{roverNo}, waypoints);
+        [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
+        plannedPath{roverNo}.xLocation = plannedXOut(7,:);
+        plannedPath{roverNo}.yLocation = plannedXOut(8,:);
+        plannedXOut = [];
 %         for n = roverNo:-1:1
 % 
 %         end 
@@ -102,9 +111,9 @@ for roverNo = 1:1:length(rover)
 end
 
 % Assign Waypoints To Rovers 
-for roverNo = 1:1:length(rover)
-    assignWaypoints(rover{roverNo}, waypoints(:,:,roverNo));
-end
+% for roverNo = 1:1:length(rover)
+%     assignWaypoints(rover{roverNo}, waypoints(:,:,roverNo));
+% end
 
 %% Online Path Following - Dynamic Segment
 for time = 0:stepSize:endTime
@@ -152,7 +161,7 @@ for time = 0:stepSize:endTime
             waypointIncrementer(rover{n}, range, min(distanceToObs)); 
     
             % Check if rover has reached its final waypoint
-            if rover{n}.waypointCounter > width(waypoints)
+            if rover{n}.waypointCounter > width(rover{n}.waypoints)
                 fprintf('Rover Number %i reached its final waypoint at time: %0.2f \n', n, time)
                 roverInactive(n,1) = 1;
                 roverInactive(n,2) = (time/stepSize)+1; 
@@ -219,22 +228,21 @@ plot(obstacleTwoP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
 plot(obstacleThreeP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
 plot(obstacleFourP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
 plot(rockField, 'FaceColor', 'green', 'FaceAlpha', 0.4)
+hold on 
 % Plot Obstacles
 th = 0:pi/50:2*pi;
 for obsNo = 1:1:width(obsLocation)
     xObsRad.obsNo = rover{1}.obsSafeRadius * cos(th) + obsLocation(1,obsNo);
     yObsRad.obsNo = rover{1}.obsSafeRadius * sin(th) + obsLocation(2,obsNo);
     plot(xObsRad.obsNo,yObsRad.obsNo, 'b')
-end
-plot(obsLocation(1,:),obsLocation(2,:), 'o','MarkerSize',5, 'MarkerFaceColor',[0.75, 0, 0.75])
-% Plot rover waypoints
-plot(waypoints(1,:),waypoints(2,:), "ko")
-% Plot rover paths 
-for roverNo = 1:1:width(rover)
-    plot(waypoints(1,:,roverNo),waypoints(2,:,roverNo), "ko")
-    plot(stateOutput(7,(1:lastFullColumn),roverNo),stateOutput(8,(1:lastFullColumn),roverNo), "r-")
     hold on
 end
-xlabel("X Position (m)")
-ylabel("Y Position (m)")
+plot(obsLocation(1,:),obsLocation(2,:), 'o','MarkerSize',5, 'MarkerFaceColor',[0.75, 0, 0.75])
+hold on 
+% Plot rover paths and waypoints
+for roverNo = 1:1:width(rover)
+    plot(rover{roverNo}.waypoints(1,:),rover{roverNo}.waypoints(2,:), "ko")
+    hold on
+    plot(stateOutput(7,(1:lastFullColumn(roverNo)),roverNo),stateOutput(8,(1:lastFullColumn(roverNo)),roverNo), "r-")
+end
 legend('','','','','','','','','','','', 'Waypoints','Measured Path')

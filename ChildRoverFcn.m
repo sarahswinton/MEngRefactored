@@ -19,6 +19,10 @@ counter = 0;                % Counter to store data
 plotVoltage = [];           % Voltage variables
 plotVoltageLeft = 0; 
 plotVoltageRight = 0; 
+
+timesteps = endTime/stepSize;
+xOut = zeros(24,timeSteps,length(rover));
+
 % Initialise state variables and derivatives
 xo = [0;0;0;0;0;0;startX;startY;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0]; 
 xdot = [0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0]; 
