@@ -1,4 +1,4 @@
-function [xOut,pathLength,crashType,roverEndTime] = ChildRoverFcn(pathWPX,pathWPY, startX, startY, obs)
+function [xOut,pathLength,crashType,roverEndTime] = childRoverFcnOOP(pathWPX,pathWPY, roverObject)
 %---------------------------------------------------------------------%
 % 2243716 MEng Project 
 % Fault Tolerant Coordination of Multiple Rovers for Planetary Exploration
@@ -19,12 +19,8 @@ counter = 0;                % Counter to store data
 plotVoltage = [];           % Voltage variables
 plotVoltageLeft = 0; 
 plotVoltageRight = 0; 
-
-timesteps = endTime/stepSize;
-xOut = zeros(24,timeSteps,length(rover));
-
 % Initialise state variables and derivatives
-xo = [0;0;0;0;0;0;startX;startY;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0]; 
+xo = [0;0;0;0;0;0;roverObject.startPoint(1);roverObject.startPoint(2);0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0]; 
 xdot = [0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0]; 
 % Initialise control errors
 eVelocity = 0;      ePsi = 0;
@@ -110,28 +106,7 @@ for time = 0:stepSize:endTime
 
         % Define Desired Velocity
         Ve = environmentalVelocity(xCurrent,yCurrent,rockField); 
-        desiredVelocity = Ve;
-        obsNumber = 10;
-        obsPresent = 0; 
-        if isempty(obs) == 0 
-        % Check if the current waypoint is close to any obstacles 
-            for obsWPCheck = 1:1:obsNumber 
-                xWPObs = obs(1,obsWPCheck) - pathWPX(waypointCounter);
-                yWPObs = obs(2,obsWPCheck) - pathWPY(waypointCounter);
-                distWPObs = sqrt((yWPObs)^2+(xWPObs)^2);
-                if distWPObs <= 0.2 && wpDistance <= 0.3
-                    obsPresent = 1; 
-                end 
-            end 
-            
-            if obsPresent == 1
-                waypointCounter = waypointCounter + 1; 
-                % Recalculate the WP distance if an obstacle is present 
-                xDeltaWP = WP(1,waypointCounter)-xCurrent;
-                yDeltaWP = WP(2,waypointCounter)-yCurrent;
-                wpDistance = sqrt((yDeltaWP)^2+(xDeltaWP)^2);
-            end
-        end         
+        desiredVelocity = Ve;       
         
         % Check if within acceptance radius 
         if (wpDistance < acceptanceRadius)
@@ -147,19 +122,6 @@ for time = 0:stepSize:endTime
         
         % Calculating LOS angle
         psiNow = atan2(yDeltaWP, xDeltaWP);
-
-        if isempty(obs) == 0 
-        % Call static obstacle avoidance function
-        [psiNow,obstacleDetected,crashOccur] = StaticObstacleAvoidance(psiNow,obs, xCurrent, yCurrent, psiCurrent,safeRadius,safetyFactor);
-        end 
-
-        if (crashOccur == 1)
-            pathEnd = 1;
-            fprintf('Rover crashed at: %.2f s \n', time) 
-            roverEndTime = time; 
-            crashType = 1;
-            break
-        end
     
         % Map Psi from [-pi,pi] to [-inf,inf]
         [accumulate,state] = Psi_Mapper_Corrected(psiNow,psiLast, state, xDeltaWP, yDeltaWP);
