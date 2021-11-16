@@ -7,10 +7,10 @@ clear
 %---------------------------------------%
 %% Instantiation of Required Classes 
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
-rover{1} = activeRover(1, [1, 1], [18, 1], 0.1, "Four Wheel");
-rover{2} = activeRover(1, [2, 1], [19, 1], 0.1, "Four Wheel");
-rover{3} = activeRover(1, [3, 1], [20, 1], 0.1, "Four Wheel");
-rover{4} = activeRover(1, [4, 1], [21, 1], 0.1, "Four Wheel");
+rover{1} = activeRover(1, [1, 1], [16, 10], 0.1, "Four Wheel");
+rover{2} = activeRover(1, [2, 1], [18, 10], 0.1, "Four Wheel");
+rover{3} = activeRover(1, [3, 1], [20, 10], 0.1, "Four Wheel");
+rover{4} = activeRover(1, [4, 1], [22, 10], 0.1, "Four Wheel");
 %rover{5} = activeRover(1, [5, 1], [22, 1], 0.1, "Four Wheel");
 
 % rover{2} = referenceRover(1, [1, 1], [1, 2], 0.01, "Four Wheel");
@@ -18,7 +18,7 @@ rover{4} = activeRover(1, [4, 1], [21, 1], 0.1, "Four Wheel");
 %% Simulation Initial Conditions
 stepSize = 0.01;            
 commsInterval = 0.01;       
-endTime = 350;   
+endTime = 650;   
 i = 0;
 
 % Data Output 
@@ -207,11 +207,23 @@ end
 
 % Data Prep: Remove zeros from the end of the stateOutput Array
 lastFullColumn = zeros(width(rover),1);
+fixStep = 0;
 for n = 1:1:width(rover)
     if roverInactive(n,2) == 0
         lastFullColumn(n) = timeSteps;
     else 
-        lastFullColumn(n) = floor(roverInactive(n,2)); 
+        lastFullColumn(n) = floor(roverInactive(n,2));
+        % Check last full column is correct
+        if stateOutput(7,(1:lastFullColumn(n)),n) == 0
+            fixStep = 1;
+        end 
+        % if not, remove empty columns until it is 
+        while fixStep == 1
+            lastFullColumn(n) = lastFullColumn(n)-1;
+            if stateOutput(7,(1:lastFullColumn(roverNo)),roverNo) ~= 0
+                fixStep = 0;
+            end 
+        end 
     end 
 end
 

@@ -178,7 +178,7 @@ classdef objRover < handle
             xDelta = obj.waypoints(1,obj.waypointCounter)-obj.xo(7);
             yDelta = obj.waypoints(2,obj.waypointCounter)-obj.xo(8);
             %   Mapping of Psi
-            [obj.accumulate,obj.state] = Psi_Mapper_Corrected(psiLOS,obj.psiLast, obj.state, xDelta, yDelta);
+            [obj.accumulate,obj.state] = Copy_of_Psi_Mapper_Corrected(psiLOS,obj.psiLast, obj.state, xDelta, yDelta);
             obj.accumulation = obj.accumulation + obj.accumulate; 
             if obj.accumulation >= 2*pi
                 obj.accumulation = obj.accumulation -2*pi;

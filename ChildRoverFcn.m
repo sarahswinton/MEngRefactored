@@ -162,7 +162,7 @@ for time = 0:stepSize:endTime
         end
     
         % Map Psi from [-pi,pi] to [-inf,inf]
-        [accumulate,state] = Psi_Mapper_Corrected(psiNow,psiLast, state, xDeltaWP, yDeltaWP);
+        [accumulate,state] = Copy_of_Psi_Mapper_Corrected(psiNow,psiLast, state, xDeltaWP, yDeltaWP);
 
         % Update accumulation variable and psiLast
         accumulation = accumulation + accumulate; 
