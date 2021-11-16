@@ -9,8 +9,8 @@ clear
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
 rover{1} = activeRover(1, [1, 1], [16, 20], 0.1, "Four Wheel");
 rover{2} = activeRover(1, [2, 1], [18, 20], 0.1, "Four Wheel");
-rover{3} = activeRover(1, [3, 1], [20, 20], 0.1, "Four Wheel");
-rover{4} = activeRover(1, [4, 1], [22, 20], 0.1, "Four Wheel");
+ rover{3} = activeRover(1, [3, 1], [20, 20], 0.1, "Four Wheel");
+% rover{4} = activeRover(1, [4, 1], [22, 20], 0.1, "Four Wheel");
 %rover{5} = activeRover(1, [5, 1], [22, 1], 0.1, "Four Wheel");
 
 % rover{2} = referenceRover(1, [1, 1], [1, 2], 0.01, "Four Wheel");
@@ -93,20 +93,20 @@ for roverNo = 1:1:length(rover)
     if roverNo ==1 
         [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
         assignWaypoints(rover{roverNo}, waypoints);
-%         [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
-%         plannedPath{roverNo}.xLocation = plannedXOut(7,:);
-%         plannedPath{roverNo}.yLocation = plannedXOut(8,:);
-%         plannedXOut = [];
+        [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
+        plannedPath{roverNo}.xLocation = plannedXOut(7,:);
+        plannedPath{roverNo}.yLocation = plannedXOut(8,:);
+        plannedXOut = [];
     else    
         [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
         assignWaypoints(rover{roverNo}, waypoints);
-%         [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
-%         plannedPath{roverNo}.xLocation = plannedXOut(7,:);
-%         plannedPath{roverNo}.yLocation = plannedXOut(8,:);
-%         plannedXOut = [];
-%         for n = roverNo:-1:1
-% 
-%         end 
+        [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
+        plannedPath{roverNo}.xLocation = plannedXOut(7,:);
+        plannedPath{roverNo}.yLocation = plannedXOut(8,:);
+        plannedXOut = [];
+        for i = roverNo-1:-1:1
+            [xCoord(roverNo,:), yCoord(roverNo,:),xCoord(i,:),yCoord1(i,:)] = PPStepCorrector(plannedPath{roverNo}.xLocation,plannedPath{roverNo}.yLocation,plannedPath{i}.xLocation,plannedPath{i}.yLocation);
+        end
     end 
     waypoints = [];
 end
