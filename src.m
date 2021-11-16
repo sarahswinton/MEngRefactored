@@ -18,7 +18,7 @@ rover{4} = activeRover(1, [4, 1], [21, 1], 0.1, "Four Wheel");
 %% Simulation Initial Conditions
 stepSize = 0.01;            
 commsInterval = 0.01;       
-endTime = 700;   
+endTime = 350;   
 i = 0;
 
 % Data Output 
@@ -208,7 +208,11 @@ end
 % Data Prep: Remove zeros from the end of the stateOutput Array
 lastFullColumn = zeros(width(rover),1);
 for n = 1:1:width(rover)
-    lastFullColumn(n) = floor(roverInactive(n,2)); 
+    if roverInactive(n,2) == 0
+        lastFullColumn(n) = timeSteps;
+    else 
+        lastFullColumn(n) = floor(roverInactive(n,2)); 
+    end 
 end
 
 % Plot rovers within 2D Martian Environment    
