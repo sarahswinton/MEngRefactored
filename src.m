@@ -88,6 +88,7 @@ steepSlopeFour = polyshape(steepSlopeXFour, steepSlopeYFour);
 % waypoints(:,:,5) = [6;1.5];
 
 % Prioritised Planning 
+waypoints = [];
 for roverNo = 1:1:length(rover)
     if roverNo ==1 
         [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
@@ -97,7 +98,6 @@ for roverNo = 1:1:length(rover)
         plannedPath{roverNo}.yLocation = plannedXOut(8,:);
         plannedXOut = [];
     else    
-        waypoints = [];
         [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
         assignWaypoints(rover{roverNo}, waypoints);
         [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
@@ -108,6 +108,7 @@ for roverNo = 1:1:length(rover)
 % 
 %         end 
     end 
+    waypoints = [];
 end
 
 % Assign Waypoints To Rovers 
@@ -207,7 +208,7 @@ end
 % Data Prep: Remove zeros from the end of the stateOutput Array
 lastFullColumn = zeros(width(rover),1);
 for n = 1:1:width(rover)
-    lastFullColumn(n) = roverInactive(n,2); 
+    lastFullColumn(n) = floor(roverInactive(n,2)); 
 end
 
 % Plot rovers within 2D Martian Environment    
