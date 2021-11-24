@@ -9,10 +9,9 @@ clear
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
 rover{1} = activeRover(1, [1, 1], [16, 20], 0.1, "Four Wheel");
 rover{2} = activeRover(1, [2, 1], [18, 20], 0.1, "Four Wheel");
- rover{3} = activeRover(1, [3, 1], [20, 20], 0.1, "Four Wheel");
+rover{3} = activeRover(1, [3, 1], [20, 20], 0.1, "Four Wheel");
 % rover{4} = activeRover(1, [4, 1], [22, 20], 0.1, "Four Wheel");
 %rover{5} = activeRover(1, [5, 1], [22, 1], 0.1, "Four Wheel");
-test change
 % rover{2} = referenceRover(1, [1, 1], [1, 2], 0.01, "Four Wheel");
 
 %% Simulation Initial Conditions
@@ -44,6 +43,8 @@ roverInactive = zeros(length(rover),2);
 % Path Planning
 plannedArrivalTime = zeros(length(rover),1);
 plannedPathLength = zeros(length(rover),1);
+crashTrue = 0;
+safePath = 0;
 
 %% Environment Initialisation
 % Define map variables 
@@ -97,16 +98,70 @@ for roverNo = 1:1:length(rover)
         plannedPath{roverNo}.xLocation = plannedXOut(7,:);
         plannedPath{roverNo}.yLocation = plannedXOut(8,:);
         plannedXOut = [];
-    else    
-        [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
-        assignWaypoints(rover{roverNo}, waypoints);
-        [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
-        plannedPath{roverNo}.xLocation = plannedXOut(7,:);
-        plannedPath{roverNo}.yLocation = plannedXOut(8,:);
-        plannedXOut = [];
-        for i = roverNo-1:-1:1
-            [xCoord(roverNo,:), yCoord(roverNo,:),xCoord(i,:),yCoord1(i,:)] = PPStepCorrector(plannedPath{roverNo}.xLocation,plannedPath{roverNo}.yLocation,plannedPath{i}.xLocation,plannedPath{i}.yLocation);
-        end
+    else
+        % Create new paths until a safe one is found
+        pathCount = 1;
+        safePath = 0;
+        while safePath == 0
+            % Empty previous unsafe path
+            waypoints = [];
+            plannedPath{roverNo}.xLocation = [];
+            plannedPath{roverNo}.yLocation = [];
+            plannedXOut = [];
+            rover{roverNo}.waypoints = [];
+            crashTrue = 0; 
+            % Plan New Path 
+            [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
+            assignWaypoints(rover{roverNo}, waypoints);
+            [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
+            plannedPath{roverNo}.xLocation = plannedXOut(7,:);
+            plannedPath{roverNo}.yLocation = plannedXOut(8,:);
+            plannedXOut = [];
+            % Check new path against previous rover paths
+            for j = 1:1:roverNo-1
+                if width(plannedPath{roverNo}.xLocation) <= width(plannedPath{j}.xLocation)
+                    for k = 1:1:width(plannedPath{j}.xLocation)
+                        % Find the distance between both rovers 
+                        if k <= width(plannedPath{roverNo}.xLocation)
+                            distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(k))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(k))^2);
+                        else
+                            distance = sqrt((plannedPath{roverNo}.xLocation(end)-plannedPath{j}.xLocation(k))^2+(plannedPath{roverNo}.yLocation(end)-plannedPath{j}.yLocation(k))^2);
+                        end 
+                        % If collision detected, mark path as unsafe and
+                        % break from loop 
+                        if distance <= 0.35
+                            crashTrue = 1;
+                            safePath = 0;
+                            break
+                        end 
+                    end 
+                else
+                    for k = 1:1:width(plannedPath{j}.xLocation)
+                        % Find the distance between both rovers 
+                        if k <= width(plannedPath{roverNo}.xLocation)
+                            distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(k))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(k))^2);
+                        else
+                            distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(end))^2+(plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(end))^2);
+                        end 
+                        % If collision detected, mark path as unsafe and
+                        % break from loop 
+                        if distance <= 0.35
+                            crashTrue = 1;
+                            safePath = 0;
+                            break
+                        end 
+                    end 
+                end 
+                % Mark path as safe or unsafe
+                if crashTrue == 0 
+                    safePath = 1;
+                    fprintf("Safe path for rover %i after %i attempts. \r\n",roverNo,pathCount)
+                else 
+                    pathCount = pathCount + 1;
+                    break
+                end 
+            end 
+        end 
     end 
     waypoints = [];
 end
