@@ -8,6 +8,7 @@ classdef activeRover < objRover
         diagnosedFaultMode = 0; 
         faultMode = 0;
         faultInjectionTime = 0;
+        faultState = 0;
         residualPosition = 0;
         faultDetected = 0; 
         faultDetectedPrev = 0;

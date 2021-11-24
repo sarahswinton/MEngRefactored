@@ -60,7 +60,7 @@
 
 %---------------------------------------------------------------------%
 
-function xdot = Rover_Model_FDIR(xcur, controlSignal, faultMode)
+function xdot = fourWheelModel(xcur, controlSignal, obj)
 
 %---------------------------------------------------------------------%
 % Motor Modelling
@@ -100,18 +100,18 @@ for j = 1:4
 end
 
 % Inject Actuator Faults
-% if faultMode == 2
-%     torques(1) = torques(1)*0.5;
-%     torques(2) = torques(2)*0.5;
-% elseif faultMode == 3
-%     torques(3) = torques(3)*0.5;
-%     torques(4) = torques(4)*0.5;
-% elseif faultMode == 1 
-%     torques(1) = 0;
-%     torques(2) = 0;
-%     torques(3) = 0;
-%     torques(4) = 0;
-% end
+if obj.faultState == 2
+    torques(1) = torques(1)*0.5;
+    torques(2) = torques(2)*0.5;
+elseif obj.faultState == 3
+    torques(3) = torques(3)*0.5;
+    torques(4) = torques(4)*0.5;
+elseif obj.faultState == 1 
+    torques(1) = 0;
+    torques(2) = 0;
+    torques(3) = 0;
+    torques(4) = 0;
+end
 
     
 % Assign r.o.c. of I and Omega to output array

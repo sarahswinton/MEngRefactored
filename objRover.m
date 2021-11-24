@@ -224,10 +224,10 @@ classdef objRover < handle
             %   x is xo (i.e. the xcurr matrix)
             %   h is the step size
             %   u is the control signal
-            k1 = h*feval(obj.modelName, obj.xo, u);              % evaluate derivative k1
-            k2 = h*feval(obj.modelName, obj.xo+k1/2, u);         % evaluate derivative k2
-            k3 = h*feval(obj.modelName, obj.xo+k2/2, u);         % evaluate derivative k3
-            k4 = h*feval(obj.modelName, obj.xo+k3, u);		    % evaluate derivative k4
+            k1 = h*feval(obj.modelName, obj.xo, u, obj);              % evaluate derivative k1
+            k2 = h*feval(obj.modelName, obj.xo+k1/2, u, obj);         % evaluate derivative k2
+            k3 = h*feval(obj.modelName, obj.xo+k2/2, u, obj);         % evaluate derivative k3
+            k4 = h*feval(obj.modelName, obj.xo+k3, u, obj);		    % evaluate derivative k4
             xo = obj.xo + (k1 + 2*k2 + 2*k3 + k4)/6;		% averaged output
         end 
 

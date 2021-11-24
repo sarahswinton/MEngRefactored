@@ -4,6 +4,7 @@
 % 2243716S
 % Initially Created: 08/10/21
 clear
+clc
 %---------------------------------------%
 %% Instantiation of Required Classes 
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
@@ -155,6 +156,7 @@ for roverNo = 1:1:length(rover)
                 if crashTrue == 0 
                     safePath = 1;
                     fprintf("Safe path for rover %i after %i attempts. \r\n",roverNo,pathCount)
+                    break
                 else 
                     pathCount = pathCount + 1;
                     break
@@ -250,6 +252,13 @@ for time = 0:stepSize:endTime
                 %----------------------------------%
                 % Integral Section
                 rover{n}.xo = rk4int(rover{n},stepSize,u);
+                %----------------------------------%
+
+                %----------------------------------%
+                % FDIR Section
+                if time == rover{n}.faultInjectionTime
+                    rover{n}.faultState = rover{n}.faultMode;
+                end
                 %----------------------------------%
             end
         end
