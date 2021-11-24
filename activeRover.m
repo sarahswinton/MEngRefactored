@@ -16,7 +16,7 @@ classdef activeRover < objRover
     end
     
     methods
-        function obj = assignFault(faultMode,injectionTime)
+        function assignFault(obj,faultMode,injectionTime)
             % Assign fault type and time to activeRover instance
             obj.faultMode = faultMode;
             obj.faultInjectionTime = injectionTime; 
