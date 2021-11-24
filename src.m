@@ -7,18 +7,17 @@ clear
 %---------------------------------------%
 %% Instantiation of Required Classes 
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
-rover{1} = activeRover(1, [1, 1], [18, 1], 0.1, "Four Wheel");
-rover{2} = activeRover(1, [2, 1], [19, 1], 0.1, "Four Wheel");
-rover{3} = activeRover(1, [3, 1], [20, 1], 0.1, "Four Wheel");
-rover{4} = activeRover(1, [4, 1], [21, 1], 0.1, "Four Wheel");
+rover{1} = activeRover(1, [1, 1], [16, 20], 0.1, "Four Wheel");
+rover{2} = activeRover(1, [2, 1], [18, 20], 0.1, "Four Wheel");
+rover{3} = activeRover(1, [3, 1], [20, 20], 0.1, "Four Wheel");
+% rover{4} = activeRover(1, [4, 1], [22, 20], 0.1, "Four Wheel");
 %rover{5} = activeRover(1, [5, 1], [22, 1], 0.1, "Four Wheel");
-
 % rover{2} = referenceRover(1, [1, 1], [1, 2], 0.01, "Four Wheel");
 
 %% Simulation Initial Conditions
 stepSize = 0.01;            
 commsInterval = 0.01;       
-endTime = 700;   
+endTime = 400;   
 i = 0;
 
 % Data Output 
@@ -44,6 +43,8 @@ roverInactive = zeros(length(rover),2);
 % Path Planning
 plannedArrivalTime = zeros(length(rover),1);
 plannedPathLength = zeros(length(rover),1);
+crashTrue = 0;
+safePath = 0;
 
 %% Environment Initialisation
 % Define map variables 
@@ -97,16 +98,70 @@ for roverNo = 1:1:length(rover)
         plannedPath{roverNo}.xLocation = plannedXOut(7,:);
         plannedPath{roverNo}.yLocation = plannedXOut(8,:);
         plannedXOut = [];
-    else    
-        [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
-        assignWaypoints(rover{roverNo}, waypoints);
-        [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
-        plannedPath{roverNo}.xLocation = plannedXOut(7,:);
-        plannedPath{roverNo}.yLocation = plannedXOut(8,:);
-        plannedXOut = [];
-%         for n = roverNo:-1:1
-% 
-%         end 
+    else
+        % Create new paths until a safe one is found
+        pathCount = 1;
+        safePath = 0;
+        while safePath == 0
+            % Empty previous unsafe path
+            waypoints = [];
+            plannedPath{roverNo}.xLocation = [];
+            plannedPath{roverNo}.yLocation = [];
+            plannedXOut = [];
+            rover{roverNo}.waypoints = [];
+            crashTrue = 0; 
+            % Plan New Path 
+            [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
+            assignWaypoints(rover{roverNo}, waypoints);
+            [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
+            plannedPath{roverNo}.xLocation = plannedXOut(7,:);
+            plannedPath{roverNo}.yLocation = plannedXOut(8,:);
+            plannedXOut = [];
+            % Check new path against previous rover paths
+            for j = 1:1:roverNo-1
+                if width(plannedPath{roverNo}.xLocation) <= width(plannedPath{j}.xLocation)
+                    for k = 1:1:width(plannedPath{j}.xLocation)
+                        % Find the distance between both rovers 
+                        if k <= width(plannedPath{roverNo}.xLocation)
+                            distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(k))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(k))^2);
+                        else
+                            distance = sqrt((plannedPath{roverNo}.xLocation(end)-plannedPath{j}.xLocation(k))^2+(plannedPath{roverNo}.yLocation(end)-plannedPath{j}.yLocation(k))^2);
+                        end 
+                        % If collision detected, mark path as unsafe and
+                        % break from loop 
+                        if distance <= 0.35
+                            crashTrue = 1;
+                            safePath = 0;
+                            break
+                        end 
+                    end 
+                else
+                    for k = 1:1:width(plannedPath{j}.xLocation)
+                        % Find the distance between both rovers 
+                        if k <= width(plannedPath{roverNo}.xLocation)
+                            distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(k))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(k))^2);
+                        else
+                            distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(end))^2+(plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(end))^2);
+                        end 
+                        % If collision detected, mark path as unsafe and
+                        % break from loop 
+                        if distance <= 0.35
+                            crashTrue = 1;
+                            safePath = 0;
+                            break
+                        end 
+                    end 
+                end 
+                % Mark path as safe or unsafe
+                if crashTrue == 0 
+                    safePath = 1;
+                    fprintf("Safe path for rover %i after %i attempts. \r\n",roverNo,pathCount)
+                else 
+                    pathCount = pathCount + 1;
+                    break
+                end 
+            end 
+        end 
     end 
     waypoints = [];
 end
@@ -120,6 +175,9 @@ end
 for time = 0:stepSize:endTime
     % Carry Out Simulation For Each Rover 
     for n = 1:1:length(rover)
+        if n == 1
+            i = i + 1;
+        end
         % Only run the rover sim if the rover is active
         if roverInactive(n,1) == 0
             %----------------------------------%
@@ -127,9 +185,6 @@ for time = 0:stepSize:endTime
             if rem(stepSize,commsInterval) == 0
                 % increment counter after each rover has been processed for the
                 % current time step
-                if n == 1
-                    i = i + 1;
-                end
                 % Store state 
                 stateOutput(:,i,n) = rover{n}.xo;
                 timeOutput(i,n) = time;
@@ -166,39 +221,40 @@ for time = 0:stepSize:endTime
                 fprintf('Rover Number %i reached its final waypoint at time: %0.2f \n', n, time)
                 roverInactive(n,1) = 1;
                 roverInactive(n,2) = (time/stepSize)+1; 
-                break       
+                     
             end
-            
-            % Find the rover's LOS Angle it's current waypoint
-            LOSAngle = findLOSAngle(rover{n});
-            
-            % Adjust the rover's LOS Angle to enable obstacle avoidance
-            LOSAngle = adjustForObstacles(rover{n}, visibleObstacles, LOSAngle);
-    
-            % Map the desired heading value
-            mapPsi(rover{n}, LOSAngle, stepSize);
-            %----------------------------------%
-    
-    
-            %----------------------------------%
-            % Control Section
-            headingControl(rover{n}, headingGains, stepSize);
-            velocityControl(rover{n}, velocityGains, stepSize);
-            u = [rover{n}.velCS;rover{n}.psiCS];
-            %----------------------------------%
-    
-    
-            %----------------------------------%
-            % Derivative Section 
-    
-            % rover{x}.xodot = roverModel(rover{n});
-            %----------------------------------%
-    
-    
-            %----------------------------------%
-            % Integral Section
-            rover{n}.xo = rk4int(rover{n},stepSize,u);
-            %----------------------------------%
+            if roverInactive(n,1) == 0
+                % Find the rover's LOS Angle it's current waypoint
+                LOSAngle = findLOSAngle(rover{n});
+                
+                % Adjust the rover's LOS Angle to enable obstacle avoidance
+                LOSAngle = adjustForObstacles(rover{n}, visibleObstacles, LOSAngle);
+        
+                % Map the desired heading value
+                mapPsi(rover{n}, LOSAngle, stepSize);
+                %----------------------------------%
+        
+        
+                %----------------------------------%
+                % Control Section
+                headingControl(rover{n}, headingGains, stepSize);
+                velocityControl(rover{n}, velocityGains, stepSize);
+                u = [rover{n}.velCS;rover{n}.psiCS];
+                %----------------------------------%
+        
+        
+                %----------------------------------%
+                % Derivative Section 
+        
+                % rover{x}.xodot = roverModel(rover{n});
+                %----------------------------------%
+        
+        
+                %----------------------------------%
+                % Integral Section
+                rover{n}.xo = rk4int(rover{n},stepSize,u);
+                %----------------------------------%
+            end
         end
     end
 end
@@ -207,8 +263,24 @@ end
 
 % Data Prep: Remove zeros from the end of the stateOutput Array
 lastFullColumn = zeros(width(rover),1);
+fixStep = 0;
 for n = 1:1:width(rover)
-    lastFullColumn(n) = floor(roverInactive(n,2)); 
+    if roverInactive(n,2) == 0
+        lastFullColumn(n) = timeSteps;
+    else 
+        lastFullColumn(n) = floor(roverInactive(n,2));
+        % Check last full column is correct
+        if stateOutput(7,(1:lastFullColumn(n)),n) == 0
+            fixStep = 1;
+        end 
+        % if not, remove empty columns until it is 
+        while fixStep == 1
+            lastFullColumn(n) = lastFullColumn(n)-1;
+            if stateOutput(7,(1:lastFullColumn(roverNo)),roverNo) ~= 0
+                fixStep = 0;
+            end 
+        end 
+    end 
 end
 
 % Plot rovers within 2D Martian Environment    

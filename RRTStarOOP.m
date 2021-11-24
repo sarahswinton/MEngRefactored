@@ -74,35 +74,35 @@ steepSlopeThree = polyshape(steepSlopeXThree, steepSlopeYThree);
 steepSlopeFour = polyshape(steepSlopeXFour, steepSlopeYFour);
 
 % Plot environment objects
-plot(steepSlopeOne, 'FaceColor', 'red', 'FaceAlpha', 0.2)
-hold on
-plot(steepSlopeTwo, 'FaceColor', 'red', 'FaceAlpha', 0.2)
-plot(steepSlopeThree, 'FaceColor', 'red', 'FaceAlpha', 0.2)
-plot(steepSlopeFour, 'FaceColor', 'red', 'FaceAlpha', 0.2)
-plot(obstacleOneP, 'FaceColor', 'black', 'FaceAlpha', 0.8) 
-plot(obstacleTwoP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
-plot(obstacleThreeP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
-plot(obstacleFourP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
-plot(rockField, 'FaceColor', 'green', 'FaceAlpha', 0.4)
-plot(goalPoint.coord)
-plot(goalPoint.coord(1), goalPoint.coord(2), '--o','MarkerSize',15, 'MarkerFaceColor',[0.75, 0, 0.75]);
-hold on
+% plot(steepSlopeOne, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+% hold on
+% plot(steepSlopeTwo, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+% plot(steepSlopeThree, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+% plot(steepSlopeFour, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+% plot(obstacleOneP, 'FaceColor', 'black', 'FaceAlpha', 0.8) 
+% plot(obstacleTwoP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
+% plot(obstacleThreeP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
+% plot(obstacleFourP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
+% plot(rockField, 'FaceColor', 'green', 'FaceAlpha', 0.4)
+% plot(goalPoint.coord)
+% plot(goalPoint.coord(1), goalPoint.coord(2), '--o','MarkerSize',15, 'MarkerFaceColor',[0.75, 0, 0.75]);
+% hold on
 
 % Plot map 
 nodes(1) = startPoint;
-figure(1)
-axis([0 xBoundary 0 yBoundary])
-title('Rover Environment')
-xlabel('X Position (m)')
-ylabel('Y Position (m)')
-hold on
+% figure(1)
+% axis([0 xBoundary 0 yBoundary])
+% title('Rover Environment')
+% xlabel('X Position (m)')
+% ylabel('Y Position (m)')
+% hold on
 
 %---------------------------------------------------------------------%
 %%%%% Map Creation Segment 
 %---------------------------------------------------------------------%
 for i = 1:1:maxNodes
     randomPoint = [floor(rand(1)*xBoundary) floor(rand(1)*yBoundary)];   % Find random coords
-    plot(randomPoint(1), randomPoint(2), 'x', 'Color',  [0 0.4470 0.7410])    % Plot new random point 
+    %plot(randomPoint(1), randomPoint(2), 'x', 'Color',  [0 0.4470 0.7410])    % Plot new random point 
 
     % Nearest Neighbour Search 
     nodeDistanceArray = [];
@@ -129,9 +129,9 @@ for i = 1:1:maxNodes
    % sense?
     if PathPlannerCollisionCheck(newPoint.coord, nearestNode.coord, obsXOne, obsYOne, obsXTwo, obsYTwo, obsXThree, obsYThree, obsXFour, obsYFour)
         % Draw line between new point and the nearest explored node 
-        line([nearestNode.coord(1), newPoint.coord(1)], [nearestNode.coord(2), newPoint.coord(2)], 'Color', 'k', 'LineWidth', 2);
-        drawnow
-        hold on
+%         line([nearestNode.coord(1), newPoint.coord(1)], [nearestNode.coord(2), newPoint.coord(2)], 'Color', 'k', 'LineWidth', 2);
+%         drawnow
+%         hold on
         
         % calculate the cost of going to the new point from nearest node 
         newPoint.cost = PathPlannerDistance(newPoint.coord, nearestNode.coord) + nearestNode.cost + PathPlannerCostClassification(newPoint.coord,maxStepSize,rockField,steepSlopeOne,steepSlopeTwo,steepSlopeThree,steepSlopeFour);
@@ -199,7 +199,7 @@ pathWPX = endPoint.coord(1);
 pathWPY = endPoint.coord(2);
 while endPoint.parent ~= 0
     start = endPoint.parent;
-    line([endPoint.coord(1), nodes(start).coord(1)], [endPoint.coord(2), nodes(start).coord(2)], 'Color', 'r', 'LineWidth', 2);
+    %line([endPoint.coord(1), nodes(start).coord(1)], [endPoint.coord(2), nodes(start).coord(2)], 'Color', 'r', 'LineWidth', 2);
     hold on
     endPoint = nodes(start);
     pathWPX = [pathWPX endPoint.coord(1)];
