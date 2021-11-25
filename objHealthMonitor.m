@@ -14,11 +14,13 @@ classdef objHealthMonitor < handle
             obj.roverCount = roverCount;
         end
         
+
         function assignRoverLocation(obj,xPos,yPos)
             % Assign the current position of each rover
             obj.xPositions = xPos;
             obj.yPositions = yPos;
         end
+
 
         function crashStatus = collisionCheck(obj)
             crashStatus = zeros(obj.roverCount, 1);
@@ -33,6 +35,16 @@ classdef objHealthMonitor < handle
                         end
                     end
                 end
+            end
+        end
+
+
+
+        function faultTrue = faultDetector(obj,residual,threshold)
+            if residual >= threshold
+                faultTrue = 1;
+            else
+                faultTrue = 0;
             end
         end
 

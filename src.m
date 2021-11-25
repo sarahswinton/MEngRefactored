@@ -53,6 +53,10 @@ plannedPathLength = zeros(length(rover),1);
 crashTrue = 0;
 safePath = 0;
 
+% Fault Detection
+faultTrue = zeros(width(rover),1);
+residualThreshold = 0.01;
+
 %% Environment Initialisation
 % Define map variables 
 xBoundary = 25;
@@ -315,9 +319,24 @@ for time = 0:stepSize:endTime
     
     % Check for rover collisions
     crashStatus = collisionCheck(healthMonitor);
+    
+    % Fault detection
+    for n = 1:1:width(rover)
+        if faultTrue == 0
+            positionResidual = sqrt((rover{n}.xo(7)-refRover{n}.xo(7))^2 + (rover{n}.xo(8)-refRover{n}.xo(8))^2);
+            faultTrue(n) = faultDetector(healthMonitor,positionResidual,residualThreshold);
+            if faultTrue(n) == 1
+                fprintf("Fault detected on rover %i at %0.2f s. \n", n, time)
+            end 
+        end
+    end
 
     %----------------------------------%
 end
+
+
+
+
 
 %% Terminal Segment 
 
