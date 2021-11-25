@@ -280,6 +280,9 @@ for time = 0:stepSize:endTime
         yPos(n) = rover{n}.xo(8);
     end
     assignRoverLocation(healthMonitor,xPos,yPos)
+    
+    % Check for rover collisions
+    crashStatus = collisionCheck(healthMonitor);
 
 
     %----------------------------------%
