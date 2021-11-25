@@ -7,12 +7,17 @@ clear
 clc
 %---------------------------------------%
 %% Instantiation of Required Classes 
+% Rover Instantiation
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
 rover{1} = activeRover(1, [1, 1], [16, 20], 0.1, "Four Wheel");
 rover{2} = activeRover(1, [2, 1], [18, 20], 0.1, "Four Wheel");
 rover{3} = activeRover(1, [3, 1], [20, 20], 0.1, "Four Wheel");
 %rover{4} = activeRover(1, [4, 1], [22, 20], 0.1, "Four Wheel");
 %rover{5} = activeRover(1, [5, 1], [22, 1], 0.1, "Four Wheel");
+
+% Health Monitor Instantiation
+% monitorName = objHealthMonitor(number of rovers);
+healthMonitor = objHealthMonitor(width(rover));
 
 %% Simulation Initial Conditions
 stepSize = 0.01;            

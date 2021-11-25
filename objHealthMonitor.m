@@ -9,7 +9,7 @@ classdef objHealthMonitor
     end
     
     methods
-        function obj = healthMonitor(roverCount)
+        function obj = objHealthMonitor(roverCount)
             %   Construct an instance of this class
             obj.roverCount = roverCount;
         end
