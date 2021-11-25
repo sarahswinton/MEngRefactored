@@ -268,6 +268,21 @@ for time = 0:stepSize:endTime
             end
         end
     end
+
+    %----------------------------------%
+    % Health Monitoring Section
+    
+    % Assign rover locations for collision checking 
+    xPos = zeros(width(rover),1);
+    yPos = zeros(width(rover),1);
+    for n = 1:1:width(rover)
+        xPos(n) = rover{n}.xo(7);
+        yPos(n) = rover{n}.xo(8);
+    end
+    assignRoverLocation(healthMonitor,xPos,yPos)
+
+
+    %----------------------------------%
 end
 
 %% Terminal Segment 

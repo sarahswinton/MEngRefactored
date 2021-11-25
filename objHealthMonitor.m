@@ -1,4 +1,4 @@
-classdef objHealthMonitor
+classdef objHealthMonitor < handle
     %HEALTHMONITOR Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -14,10 +14,10 @@ classdef objHealthMonitor
             obj.roverCount = roverCount;
         end
         
-        function assignRoverLocation(obj,roverNo,xPos,yPos)
-            obj.xPositions(roverNo) = xPos;
-            obj.yPositions(roverNo) = yPos;
-        end
+        function assignRoverLocation(obj,xPos,yPos)
+            obj.xPositions = xPos;
+            obj.yPositions = yPos;
+         end
     end
 end
 
