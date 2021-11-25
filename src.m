@@ -324,7 +324,7 @@ for time = 0:stepSize:endTime
     for n = 1:1:width(rover)
         if faultTrue == 0
             positionResidual = sqrt((rover{n}.xo(7)-refRover{n}.xo(7))^2 + (rover{n}.xo(8)-refRover{n}.xo(8))^2);
-            faultTrue(n) = faultDetector(healthMonitor,positionResidual,residualThreshold);
+            faultTrue(n) = faultDetector(healthMonitor,n,positionResidual,residualThreshold);
             if faultTrue(n) == 1
                 fprintf("Fault detected on rover %i at %0.2f s. \n", n, time)
             end 

@@ -6,12 +6,14 @@ classdef objHealthMonitor < handle
         roverCount = 0;
         xPositions = [];
         yPositions = [];
+        detectionLog = [];
     end
     
     methods
         function obj = objHealthMonitor(roverCount)
             %   Construct an instance of this class
             obj.roverCount = roverCount;
+            obj.detectionLog = zeros(roverCount,1);
         end
         
 
@@ -40,9 +42,10 @@ classdef objHealthMonitor < handle
 
 
 
-        function faultTrue = faultDetector(obj,residual,threshold)
+        function faultTrue = faultDetector(obj,roverNo,residual,threshold)
             if residual >= threshold
                 faultTrue = 1;
+                obj.detectionLog(roverNo) = 1;
             else
                 faultTrue = 0;
             end
