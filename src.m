@@ -11,7 +11,8 @@ clc
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
 rover{1} = activeRover(1, [1, 1], [16, 20], 0.1, "Four Wheel");
 refRover{1} = referenceRover(1, [1, 1], [16, 20], 0.1, "Four Wheel");
-%rover{2} = activeRover(1, [2, 1], [18, 20], 0.1, "Four Wheel");
+rover{2} = activeRover(1, [2, 1], [18, 20], 0.1, "Four Wheel");
+refRover{2} = activeRover(1, [2, 1], [18, 20], 0.1, "Four Wheel");
 %rover{3} = activeRover(1, [3, 1], [20, 20], 0.1, "Four Wheel");
 %rover{4} = activeRover(1, [4, 1], [22, 20], 0.1, "Four Wheel");
 %rover{5} = activeRover(1, [5, 1], [22, 1], 0.1, "Four Wheel");
@@ -91,13 +92,6 @@ steepSlopeThree = polyshape(steepSlopeXThree, steepSlopeYThree);
 steepSlopeFour = polyshape(steepSlopeXFour, steepSlopeYFour);
 
 %% Path Planning
-
-% Generate Manual Waypoints
-% waypoints(:,:,1) = [2;1.5];
-% waypoints(:,:,2) = [3;1.5];
-% waypoints(:,:,3) = [4;1.5];
-% waypoints(:,:,4) = [5;1.5];
-% waypoints(:,:,5) = [6;1.5];
 
 % Prioritised Planning 
 waypoints = [];
@@ -260,8 +254,8 @@ for time = 0:stepSize:endTime
 
         %----------------------------------%
         % Run Reference Rover Sim
-
         if refRoverInactive(n,1) == 0
+            %----------------------------------%
             % LOS Navigation
             findVelocity(refRover{n});
             range = distanceToWaypoint(refRover{n});
@@ -280,8 +274,10 @@ for time = 0:stepSize:endTime
                 refRoverInactive(n,2) = (time/stepSize)+1; 
                      
             end
+            %----------------------------------%
     
             if refRoverInactive(n,1) == 0
+                %----------------------------------%
                 LOSAngle = findLOSAngle(refRover{n});
                 LOSAngle = adjustForObstacles(refRover{n}, visibleObstacles, LOSAngle);
                 mapPsi(refRover{n}, LOSAngle, stepSize);
@@ -330,7 +326,6 @@ for time = 0:stepSize:endTime
             end 
         end
     end
-
     %----------------------------------%
 end
 
