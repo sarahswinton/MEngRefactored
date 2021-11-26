@@ -57,8 +57,8 @@ safePath = 0;
 % Fault Detection
 faultTrue = zeros(width(rover),2);
 residualThreshold = 0.01;
-detectionResiduals = zeros(width(rover),2);
-diagnosisResiduals = zeros(width(rover),2);
+detectionResiduals = zeros(width(rover),4);
+diagnosisResiduals = zeros(width(rover),3);
 
 %% Environment Initialisation
 % Define map variables 
@@ -274,7 +274,6 @@ for time = 0:stepSize:endTime
                 fprintf('Ref Rover Number %i reached its final waypoint at time: %0.2f \n', n, time)
                 refRoverInactive(n,1) = 1;
                 refRoverInactive(n,2) = (time/stepSize)+1; 
-                     
             end
             %----------------------------------%
     
@@ -330,6 +329,8 @@ for time = 0:stepSize:endTime
                 faultTrue(n,2) = time;
                 detectionResiduals(n,1) = positionResidual;
                 detectionResiduals(n,2) = rover{n}.xo(12)-refRover{n}.xo(12);
+                detectionResiduals(n,3) = rover{n}.xo(7);
+                detectionResiduals(n,4) = rover{n}.xo(8);
                 fprintf("Fault detected on rover %i at %0.2f s. \n", n, time)
             end 
         end
@@ -341,6 +342,7 @@ for time = 0:stepSize:endTime
             fprintf("Start diagnosis \n")
             diagnosisResiduals(n,1) = sqrt((rover{n}.xo(7)-refRover{n}.xo(7))^2 + (rover{n}.xo(8)-refRover{n}.xo(8))^2);
             diagnosisResiduals(n,2) = rover{n}.xo(12)-refRover{n}.xo(12);
+            diagnosisResiduals(n,3) = sqrt((rover{n}.xo(7)-detectionResiduals(n,3))^2+(rover{n}.xo(8)-detectionResiduals(n,4))^2);
         end 
     end 
     %----------------------------------%
