@@ -55,8 +55,10 @@ crashTrue = 0;
 safePath = 0;
 
 % Fault Detection
-faultTrue = zeros(width(rover),1);
+faultTrue = zeros(width(rover),2);
 residualThreshold = 0.01;
+detectionResiduals = zeros(width(rover),2);
+diagnosisResiduals = zeros(width(rover),2);
 
 %% Environment Initialisation
 % Define map variables 
@@ -321,16 +323,26 @@ for time = 0:stepSize:endTime
     
     % Fault detection
     for n = 1:1:width(rover)
-        if faultTrue == 0
+        if faultTrue(n,1) == 0
             positionResidual = sqrt((rover{n}.xo(7)-refRover{n}.xo(7))^2 + (rover{n}.xo(8)-refRover{n}.xo(8))^2);
             faultTrue(n) = faultDetector(healthMonitor,n,positionResidual,residualThreshold);
-            if faultTrue(n) == 1
+            if faultTrue(n,1) == 1
+                faultTrue(n,2) = time;
+                detectionResiduals(n,1) = positionResidual;
+                detectionResiduals(n,2) = rover{n}.xo(12)-refRover{n}.xo(12);
                 fprintf("Fault detected on rover %i at %0.2f s. \n", n, time)
             end 
         end
     end
 
     % Fault Isolation 
+    for n = 1:1:width(rover)
+        if faultTrue(n,1) == 1 && time == (faultTrue(n,2) + 1)
+            fprintf("Start diagnosis \n")
+            diagnosisResiduals(n,1) = sqrt((rover{n}.xo(7)-refRover{n}.xo(7))^2 + (rover{n}.xo(8)-refRover{n}.xo(8))^2);
+            diagnosisResiduals(n,2) = rover{n}.xo(12)-refRover{n}.xo(12);
+        end 
+    end 
     %----------------------------------%
 end
 
