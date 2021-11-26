@@ -8,6 +8,7 @@ classdef objHealthMonitor < handle
         yPositions = [];
         psiValues = [];
         detectionLog = [];
+        faultLog = [];
     end
     
     methods
@@ -24,7 +25,7 @@ classdef objHealthMonitor < handle
             obj.yPositions = yPos;
         end
 
-        
+
         function assignRoverYaw(obj,psi)
             obj.psiValues = psi;
         end 
@@ -57,7 +58,9 @@ classdef objHealthMonitor < handle
             end
         end
 
-
+        function assignFault(obj,n,faultType)
+            obj.faultLog(n) = faultType;
+        end 
     end
 end
 

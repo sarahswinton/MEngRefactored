@@ -343,6 +343,22 @@ for time = 0:stepSize:endTime
             diagnosisResiduals(n,1) = sqrt((rover{n}.xo(7)-refRover{n}.xo(7))^2 + (rover{n}.xo(8)-refRover{n}.xo(8))^2);
             diagnosisResiduals(n,2) = rover{n}.xo(12)-refRover{n}.xo(12);
             diagnosisResiduals(n,3) = sqrt((rover{n}.xo(7)-detectionResiduals(n,3))^2+(rover{n}.xo(8)-detectionResiduals(n,4))^2);
+
+            positionResidual = diagnosisResiduals(n,1) - detectionResiduals(n,1);
+            yawResidual = diagnosisResiduals(n,2) - detectionResiduals(n,2);
+            poseDeltaResidual = diagnosisResiduals(n,3);
+            
+            if positionResidual <= 0.01
+                faultType = 2;
+            elseif yawResidual <= 0.1
+                faultType = 1;
+            elseif abs(poseDeltaResidual) <= (0.25*rover{n}.desiredVelocity)
+                faultType = 1; 
+            else
+                faultType = 4;
+            end 
+
+            assignFault(healthMonitor,n,faultType);
         end 
     end 
     %----------------------------------%
