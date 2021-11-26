@@ -51,14 +51,16 @@ refRoverInactive = zeros(length(rover),2);
 % Path Planning
 plannedArrivalTime = zeros(length(rover),1);
 plannedPathLength = zeros(length(rover),1);
+etaPlanned = zeros(length(rover),1);
 crashTrue = 0;
 safePath = 0;
 
-% Fault Detection
+% FDIR
 faultTrue = zeros(width(rover),2);
 residualThreshold = 0.01;
 detectionResiduals = zeros(width(rover),4);
 diagnosisResiduals = zeros(width(rover),3);
+reconfigurationRequest = zeros(width(rover),1);
 
 %% Environment Initialisation
 % Define map variables 
@@ -102,7 +104,7 @@ for roverNo = 1:1:length(rover)
         [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
         assignWaypoints(rover{roverNo}, waypoints);
         assignWaypoints(refRover{roverNo}, waypoints);
-        [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
+        [plannedXOut(:,:),plannedPathLength(roverNo), etaPlanned(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
         plannedPath{roverNo}.xLocation = plannedXOut(7,:);
         plannedPath{roverNo}.yLocation = plannedXOut(8,:);
         plannedXOut = [];
@@ -123,7 +125,7 @@ for roverNo = 1:1:length(rover)
             [waypoints(1,:),waypoints(2,:)] = RRTStarOOP(rover{roverNo});
             assignWaypoints(rover{roverNo}, waypoints);
             assignWaypoints(refRover{roverNo}, waypoints);
-            [plannedXOut(:,:),plannedPathLength(roverNo), plannedArrivalTime(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
+            [plannedXOut(:,:),plannedPathLength(roverNo), etaPlanned(roverNo)] = childRoverFcnOOP(waypoints(1,:),waypoints(2,:), rover{roverNo});
             plannedPath{roverNo}.xLocation = plannedXOut(7,:);
             plannedPath{roverNo}.yLocation = plannedXOut(8,:);
             plannedXOut = [];
@@ -357,10 +359,43 @@ for time = 0:stepSize:endTime
             else
                 faultType = 4;
             end 
-
             assignFault(healthMonitor,n,faultType);
+            reconfigurationRequest(n) = 1;
         end 
     end 
+
+    % Fault Reconfiguration 
+    for n = 1:1:width(rover)
+        if reconfigurationRequest(n) == 1
+            % Find ETA of each rover
+            eta = zeros(width(rover),1);
+            for m = 1:1:width(rover)
+                if m == n 
+                    eta(m) = 10000;
+                elseif roverInactive(n,1) == 0 
+                    d = sqrt((rover{n}.targetPoint(1)-rover{m}.targetPoint(1))^2+(rover{n}.targetPoint(2)-rover{m}.targetPoint(2))^2);
+                    v = rover{m}.desiredVelocity; 
+                    t = d/v;
+                    eta(m) = etaPlanned(m) + t;  
+                else 
+                    eta(m) = 10000; 
+                end 
+            end
+            % Select best rover
+            [minEta, minEtaIndex] = min(eta); 
+            fprintf("The closest rover for allocation is %i. \n", minEtaIndex)
+            % Add reallocated target 
+            % update waypoints
+            % assign waypoints
+            updatedWP = [];
+            updatedWP(1,:) = [rover{minEtaIndex}.waypoints(1,:) rover{n}.targetPoint(1)];
+            updatedWP(2,:) = [rover{minEtaIndex}.waypoints(2,:) rover{n}.targetPoint(2)];
+            assignWaypoints(rover{minEtaIndex},updatedWP);
+            assignWaypoints(refRover{minEtaIndex},updatedWP);
+            % Return reallocation
+            reconfigurationRequest(n) = 0;
+        end 
+    end
     %----------------------------------%
 end
 

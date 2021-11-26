@@ -67,6 +67,7 @@ classdef objRover < handle
         end
 
         function assignWaypoints(obj,wayPoints)
+            obj.waypoints = [];
             obj.waypoints(:,:) = wayPoints;
         end
         
