@@ -307,11 +307,14 @@ for time = 0:stepSize:endTime
     % Assign rover locations for collision checking 
     xPos = zeros(width(rover),1);
     yPos = zeros(width(rover),1);
+    psi = zeros(width(rover),1);
     for n = 1:1:width(rover)
         xPos(n) = rover{n}.xo(7);
         yPos(n) = rover{n}.xo(8);
+        psi(n) = rover{n}.xo(12);
     end
     assignRoverLocation(healthMonitor,xPos,yPos)
+    assignRoverYaw(healthMonitor,psi)
     
     % Check for rover collisions
     crashStatus = collisionCheck(healthMonitor);
@@ -326,6 +329,8 @@ for time = 0:stepSize:endTime
             end 
         end
     end
+
+    % Fault Isolation 
     %----------------------------------%
 end
 

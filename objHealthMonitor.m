@@ -6,6 +6,7 @@ classdef objHealthMonitor < handle
         roverCount = 0;
         xPositions = [];
         yPositions = [];
+        psiValues = [];
         detectionLog = [];
     end
     
@@ -22,6 +23,11 @@ classdef objHealthMonitor < handle
             obj.xPositions = xPos;
             obj.yPositions = yPos;
         end
+
+        
+        function assignRoverYaw(obj,psi)
+            obj.psiValues = psi;
+        end 
 
 
         function crashStatus = collisionCheck(obj)
