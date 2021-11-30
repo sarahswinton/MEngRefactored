@@ -6,6 +6,11 @@
 clear
 clc
 %---------------------------------------%
+
+%------------%
+% Bookmark: 
+% Unfinished debugging of diagnosis
+%------------% 
 %% Instantiation of Required Classes 
 % Rover Instantiation
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
@@ -354,48 +359,125 @@ for time = 0:stepSize:endTime
                 faultType = 2;
             elseif yawResidual <= 0.1
                 faultType = 1;
+                reconfigurationRequest(n) = 1;
             elseif abs(poseDeltaResidual) <= (0.25*rover{n}.desiredVelocity)
                 faultType = 1; 
+                reconfigurationRequest(n) = 1;
             else
                 faultType = 4;
             end 
             assignFault(healthMonitor,n,faultType);
-            reconfigurationRequest(n) = 1;
         end 
     end 
 
-    % Fault Reconfiguration 
+    % Target Reallocation  
+%     for n = 1:1:width(rover)
+%         if reconfigurationRequest(n) == 1
+%             % Find ETA of each rover
+%             eta = zeros(width(rover),1);
+%             for m = 1:1:width(rover)
+%                 if m == n 
+%                     eta(m) = 10000;
+%                 elseif roverInactive(n,1) == 0 
+%                     d = sqrt((rover{n}.targetPoint(1)-rover{m}.targetPoint(1))^2+(rover{n}.targetPoint(2)-rover{m}.targetPoint(2))^2);
+%                     v = rover{m}.desiredVelocity; 
+%                     t = d/v;
+%                     eta(m) = etaPlanned(m) + t;  
+%                 else 
+%                     eta(m) = 10000; 
+%                 end 
+%             end
+%             % Select best rover
+%             [minEta, minEtaIndex] = min(eta); 
+%             fprintf("The closest rover for allocation is %i. \n", minEtaIndex)
+%             % Add reallocated target 
+%             % update waypoints
+%             % assign waypoints
+%             updatedWP = [];
+%             updatedWP(1,:) = [rover{minEtaIndex}.waypoints(1,:) rover{n}.targetPoint(1)];
+%             updatedWP(2,:) = [rover{minEtaIndex}.waypoints(2,:) rover{n}.targetPoint(2)];
+%             assignWaypoints(rover{minEtaIndex},updatedWP);
+%             assignWaypoints(refRover{minEtaIndex},updatedWP);
+%             % Return reallocation
+%             reconfigurationRequest(n) = 0;
+%         end 
+%     end
+
+
+    % Path Blending 
+    distanceBetweenRovers = zeros(width(rover),1);
+    newWaypointsX = [];
+    newWaypointsY = [];
     for n = 1:1:width(rover)
         if reconfigurationRequest(n) == 1
-            % Find ETA of each rover
-            eta = zeros(width(rover),1);
-            for m = 1:1:width(rover)
-                if m == n 
-                    eta(m) = 10000;
-                elseif roverInactive(n,1) == 0 
-                    d = sqrt((rover{n}.targetPoint(1)-rover{m}.targetPoint(1))^2+(rover{n}.targetPoint(2)-rover{m}.targetPoint(2))^2);
-                    v = rover{m}.desiredVelocity; 
-                    t = d/v;
-                    eta(m) = etaPlanned(m) + t;  
-                else 
-                    eta(m) = 10000; 
+            for j = 1:1:width(rover)
+                if n ~= j && (roverInactive(j,1) == 0)
+                    distanceBetweenRovers(j) = sqrt((rover{n}.xo(7)-rover{j}.xo(7))^2 + (rover{n}.xo(8)-rover{j}.xo(8))^2);
+                else
+                    distanceBetweenRovers(j) = 10000;       % Number large enough that it wont be selected 
                 end 
             end
-            % Select best rover
-            [minEta, minEtaIndex] = min(eta); 
-            fprintf("The closest rover for allocation is %i. \n", minEtaIndex)
-            % Add reallocated target 
-            % update waypoints
-            % assign waypoints
-            updatedWP = [];
-            updatedWP(1,:) = [rover{minEtaIndex}.waypoints(1,:) rover{n}.targetPoint(1)];
-            updatedWP(2,:) = [rover{minEtaIndex}.waypoints(2,:) rover{n}.targetPoint(2)];
-            assignWaypoints(rover{minEtaIndex},updatedWP);
-            assignWaypoints(refRover{minEtaIndex},updatedWP);
+
+            [minDistance, distanceIndex] = min(distanceBetweenRovers); 
+            waypoints = rover{distanceIndex}.waypoints;
+            waypointsCrashedRover = rover{n}.waypoints;
+
+            % Compare WP Number for crashed rover and chosen rover
+            waypointRemaining = zeros(2,1);
+            waypointRemaining(1) = width(rover{n}.waypoints) - rover{n}.waypointCounter;
+            waypointRemaining(2) = width(rover{distanceIndex}.waypoints) - rover{distanceIndex}.waypointCounter;
+            % Select rover with fewer remaining waypoints
+            [minWPRemain, waypointIndex] = min(waypointRemaining);
+            if waypointIndex == 1
+                currentWPNumber = rover{n}.waypointCounter;
+            else 
+                currentWPNumber = rover{distanceIndex}.waypointCounter;
+            end 
+            
+            % Set max waypoints 
+            if width(rover{n}.waypoints) >= width(rover{distanceIndex}.waypoints)
+                maxWaypoints = width(rover{distanceIndex}.waypoints);
+            else 
+                maxWaypoints = width(rover{n}.waypoints);
+            end 
+
+            % Replace future WP with blended path WP
+            for k = maxWaypoints:-1:currentWPNumber
+                midpointX = (rover{distanceIndex}.waypoints(1,k) + rover{n}.waypoints(1,k))/2;
+                midpointY = (rover{distanceIndex}.waypoints(2,k) + rover{n}.waypoints(2,k))/2;  
+%                 if k == maxWP 
+%                     targetSafe = 1; 
+%                     distanceBetweenTargets = zeros(roverNumber,1);
+%                     while targetSafe == 1
+%                         for checkTargets = 1:1:roverNumber
+%                             if checkTargets ~= n && checkTargets ~= j
+%                                 distanceBetweenTargets(checkTargets) = (sqrt((roverTargetsX(checkTargets)-midpointX)^2+(roverTargetsY(checkTargets)-midpointY)^2));
+%                             end 
+%                         end
+%                         if min(distanceBetweenTargets(distanceBetweenTargets>0)) < 1 
+%                             targetSafe = 1;
+%                             midpointY = midpointY - 0.1;
+%                         else
+%                             targetSafe = 0;
+%                         end 
+%                     end
+%                 end
+                newWaypointsX = [newWaypointsX midpointX];
+                newWaypointsY = [newWaypointsY midpointY];
+                
+            end
+
+            newWaypointsX = [newWaypointsX rover{distanceIndex}.xo(7)];
+            newWaypointsY = [newWaypointsY rover{distanceIndex}.xo(8)];
+
+            pathBlendWaypoints = [flip(newWaypointsX);flip(newWaypointsY)];
+            assignWaypoints(rover{distanceIndex},pathBlendWaypoints);
+            assignWaypoints(refRover{distanceIndex},pathBlendWaypoints);
             % Return reallocation
             reconfigurationRequest(n) = 0;
+
         end 
-    end
+    end 
     %----------------------------------%
 end
 
