@@ -469,10 +469,18 @@ for time = 0:stepSize:endTime
                     newWaypointsX = [newWaypointsX midpointX];
                     newWaypointsY = [newWaypointsY midpointY];
                     
-                end
-    
+                end 
+
                 newWaypointsX = [newWaypointsX rover{distanceIndex}.xo(7)];
                 newWaypointsY = [newWaypointsY rover{distanceIndex}.xo(8)];
+
+
+                % Add rover's previous waypoints to the list for correct
+                % plotting output
+                for wpNo = (rover{distanceIndex}.waypointCounter-1):-1:1
+                    newWaypointsX = [newWaypointsX rover{distanceIndex}.waypoints(1,wpNo)];
+                    newWaypointsY = [newWaypointsY rover{distanceIndex}.waypoints(2,wpNo)];
+                end 
             
                 pathBlendWaypoints = [flip(newWaypointsX);flip(newWaypointsY)];
                 assignWaypoints(rover{distanceIndex},pathBlendWaypoints);
