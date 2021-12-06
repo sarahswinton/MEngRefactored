@@ -184,6 +184,53 @@ classdef objRover < handle
             end
         end 
 
+        function psiLOS = adjustForInactiveRovers(obj,objGroup,roverInactive, psiLOS)
+            for n = 1:1:width(roverInactive)
+                if roverInactive(n,1) == 1
+                    % Find range to current inactive rover
+                    xDistance = (obj.xo(7)-objGroup{n}.xo(7));
+                    yDistance = (obj.xo(8)-objGroup{n}.xo(8));
+                    distance = sqrt((xDistance)^2 + (yDistance)^2);
+                
+                    % Find angles between the rover and inactive rover
+                    psiObs =  atan2(yDistance,xDistance);
+                    visionAngle = abs(psiLOS-psiObs);
+                    % Ensure [-pi,pi] boundary visionAngle issues are resolved
+                    if abs(psiLOS) >= (0.95*pi)
+                        visionAngle = abs(abs(psiLOS)-abs(psiObs));
+                    end
+                
+                    % Take evasive action if inactive rover is on path
+                    if obsRange <= 1 && (visionAngle <=0.610865) % +- 35 degrees
+                          if (obj.xo(12) <= psiObs) && (psiLOS < pi/2) && (psiLOS >= 0)
+                            psiLOS = psiObs - atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) > psiObs) && (psiLOS < pi/2) && (psiLOS >= 0)
+                            psiLOS = psiObs + atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) <= psiObs) && (psiLOS >= pi/2) && (psiLOS < pi)
+                            psiLOS = psiObs - atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) > psiObs) && (psiLOS >= pi/2) && (psiLOS < pi)
+                            psiLOS = psiObs + atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) <= psiObs) && (psiLOS >= pi)
+                            psiLOS = psiObs - atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) > psiObs) && (psiLOS >= pi)
+                            psiLOS = psiObs + atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) <= psiObs) && (psiLOS >= -pi/2) && (psiLOS < 0) 
+                            psiLOS = psiObs - atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) > psiObs) && (psiLOS >= -pi/2) && (psiLOS < 0) 
+                            psiLOS = psiObs + atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) <= psiObs) && (psiLOS < -pi/2)&& (psiObs < -pi/2)
+                            psiLOS = psiObs - atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) > psiObs) && (psiLOS < -pi/2) && (psiObs < -pi/2) 
+                            psiLOS = psiObs + atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                           elseif (obj.xo(12) <= psiObs) && (psiLOS < -pi/2) && (sign(psiObs) ~= sign(psiLOS)) && visionAngle <= 0.349066
+                            psiLOS = psiLOS - atan((obj.rovSafeRadius*(1/visionAngle))/obsRange);     
+                          end
+                    end
+                                    
+                end 
+            end 
+        end 
+
         function obj = mapPsi(obj,psiLOS,stepSize)
             xDelta = obj.waypoints(1,obj.waypointCounter)-obj.xo(7);
             yDelta = obj.waypoints(2,obj.waypointCounter)-obj.xo(8);

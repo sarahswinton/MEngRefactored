@@ -10,13 +10,16 @@ clc
 %% Instantiation of Required Classes 
 % Rover Instantiation
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
-rover{1} = activeRover(1, [1, 1], [16, 20], 0.1, "Four Wheel");
-refRover{1} = referenceRover(1, [1, 1], [16, 20], 0.1, "Four Wheel");
-rover{2} = activeRover(1, [3, 1], [18, 20], 0.1, "Four Wheel");
-refRover{2} = activeRover(1, [3, 1], [18, 20], 0.1, "Four Wheel");
-%rover{3} = activeRover(1, [3, 1], [20, 20], 0.1, "Four Wheel");
-%rover{4} = activeRover(1, [4, 1], [22, 20], 0.1, "Four Wheel");
-%rover{5} = activeRover(1, [5, 1], [22, 1], 0.1, "Four Wheel");
+rover{1} = activeRover(1, [1, 1], [22, 5], 0.1, "Four Wheel");
+refRover{1} = referenceRover(1, [1, 1], [22, 5], 0.1, "Four Wheel");
+rover{2} = activeRover(1, [3, 1], [20.5, 4], 0.1, "Four Wheel");
+refRover{2} = referenceRover(1, [3, 1], [20.5, 4], 0.1, "Four Wheel");
+rover{3} = activeRover(1, [3, 1], [19, 3], 0.1, "Four Wheel");
+refRover{3} = referenceRover(1, [3, 1], [19, 3], 0.1, "Four Wheel");
+rover{4} = activeRover(1, [4, 1], [17.5, 2], 0.1, "Four Wheel");
+refRover{4} = referenceRover(1, [4, 1], [17.5, 2], 0.1, "Four Wheel");
+rover{5} = activeRover(1, [5, 1], [16, 1], 0.1, "Four Wheel");
+refRover{5} = referenceRover(1, [5, 1], [16, 1], 0.1, "Four Wheel");
 
 % Health Monitor Instantiation
 % monitorName = objHealthMonitor(number of rovers);
@@ -25,7 +28,7 @@ healthMonitor = objHealthMonitor(width(rover));
 %% Simulation Initial Conditions
 stepSize = 0.01;            
 commsInterval = 0.01;       
-endTime = 400;   
+endTime = 700;   
 i = 0;
 
 % Data Output 
@@ -57,12 +60,13 @@ crashTrue = 0;
 safePath = 0;
 
 % FDIR
-reconfigMode = 2;
+reconfigMode = 1;
 residualThreshold = 0.01;
 faultTrue = zeros(width(rover),2);
 detectionResiduals = zeros(width(rover),4);
 diagnosisResiduals = zeros(width(rover),3);
 reconfigurationRequest = zeros(width(rover),1);
+trafficControlEnabled = 0;
 slow = zeros(width(rover),1);
 
 %% Environment Initialisation
@@ -134,6 +138,7 @@ for roverNo = 1:1:length(rover)
             plannedXOut = [];
             % Check new path against previous rover paths
             for j = 1:1:roverNo-1
+                % If comparison rover has a longer path
                 if width(plannedPath{roverNo}.xLocation) <= width(plannedPath{j}.xLocation)
                     for k = 1:1:width(plannedPath{j}.xLocation)
                         % Find the distance between both rovers 
@@ -150,13 +155,14 @@ for roverNo = 1:1:length(rover)
                             break
                         end 
                     end 
+                % If current rover has a longer path 
                 else
-                    for k = 1:1:width(plannedPath{j}.xLocation)
+                    for k = 1:1:width(plannedPath{roverNo}.xLocation)
                         % Find the distance between both rovers 
-                        if k <= width(plannedPath{roverNo}.xLocation)
+                        if k <= width(plannedPath{j}.xLocation)
                             distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(k))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(k))^2);
                         else
-                            distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(end))^2+(plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(end))^2);
+                            distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(end))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(end))^2);
                         end 
                         % If collision detected, mark path as unsafe and
                         % break from loop 
@@ -166,17 +172,17 @@ for roverNo = 1:1:length(rover)
                             break
                         end 
                     end 
-                end 
-                % Mark path as safe or unsafe
-                if crashTrue == 0 
-                    safePath = 1;
-                    fprintf("Safe path for rover %i after %i attempts. \r\n",roverNo,pathCount)
-                    break
-                else 
-                    pathCount = pathCount + 1;
-                    break
-                end 
+                end  
             end 
+            % Mark path as safe or unsafe
+            if crashTrue == 0 
+                safePath = 1;
+                fprintf("Safe path for rover %i after %i attempts. \r\n",roverNo,pathCount)
+                break
+            else 
+                pathCount = pathCount + 1;
+                break
+            end
         end 
     end 
     waypoints = [];
@@ -233,6 +239,7 @@ for time = 0:stepSize:endTime
             if roverInactive(n,1) == 0
                 LOSAngle = findLOSAngle(rover{n});
                 LOSAngle = adjustForObstacles(rover{n}, visibleObstacles, LOSAngle);
+                % LOSAngle = adjustForInactiveRovers(rover{n},rover,roverInactive,LOSAngle);
                 mapPsi(rover{n}, LOSAngle, stepSize);
                 %----------------------------------%
         
@@ -263,7 +270,7 @@ for time = 0:stepSize:endTime
 
         %----------------------------------%
         % Run Reference Rover Sim
-        if refRoverInactive(n,1) == 0
+        if refRoverInactive(n,1) == 0 
             %----------------------------------%
             % LOS Navigation
             findVelocity(refRover{n});
@@ -290,6 +297,7 @@ for time = 0:stepSize:endTime
                 %----------------------------------%
                 LOSAngle = findLOSAngle(refRover{n});
                 LOSAngle = adjustForObstacles(refRover{n}, visibleObstacles, LOSAngle);
+                % LOSAngle = adjustForInactiveRovers(refRover{n},refRover,roverInactive,LOSAngle);
                 mapPsi(refRover{n}, LOSAngle, stepSize);
                 %----------------------------------%
         
@@ -494,33 +502,36 @@ for time = 0:stepSize:endTime
     end 
 
     % Traffic Control 
-    slow = zeros(width(rover),1); 
-    for n = 1:1:width(rover)     
-        if roverInactive(n,1) == 0 
-            for j = n:1:width(rover)
-                if roverInactive(j,1) == 0 
-                    distance = sqrt((rover{n}.xo(7)-rover{j}.xo(7))^2 + (rover{n}.xo(8)-rover{j}.xo(8))^2);
-                    if distance <= 1.2  && distance > 0.8    % Action to be taken if rovers within 1.2 m of eachother)
-                        slow(j) = slow(j) + 1;
-                    elseif distance <= 0.8 && distance > 0.35
-                        slow(j) = slow(j) + 2;
-                    elseif distance <= 0.35 
-                        % Mark rover n as crashed
-                        roverInactive(n,1) = 1;
-                        roverInactive(n,2) = (time/stepSize)+1; 
-                        refRoverInactive(n,1) = 1;
-                        refRoverInactive(n,2) = (time/stepSize)+1; 
-                        
-                        % Mark rover j as crashed
-                        roverInactive(j,1) = 1;
-                        roverInactive(j,2) = (time/stepSize)+1; 
-                        refRoverInactive(j,1) = 1;
-                        refRoverInactive(j,2) = (time/stepSize)+1; 
+    if trafficControlEnabled == 1
+        slow = zeros(width(rover),1); 
+        for n = 1:1:width(rover)     
+            if roverInactive(n,1) == 0 
+                for j = n+1:1:width(rover)
+                    if roverInactive(j,1) == 0 
+                        distance = sqrt((rover{n}.xo(7)-rover{j}.xo(7))^2 + (rover{n}.xo(8)-rover{j}.xo(8))^2);
+                        if distance <= 1.2  && distance > 0.8    % Action to be taken if rovers within 1.2 m of eachother)
+                            slow(j) = slow(j) + 1;
+                        elseif distance <= 0.8 && distance > 0.35
+                            slow(j) = slow(j) + 2;
+                        elseif distance <= 0.35 
+                            % Mark rover n as crashed
+                            fprintf("A crash has occured \n")
+                            roverInactive(n,1) = 1;
+                            roverInactive(n,2) = (time/stepSize)+1; 
+                            refRoverInactive(n,1) = 1;
+                            refRoverInactive(n,2) = (time/stepSize)+1; 
+                            
+                            % Mark rover j as crashed
+                            roverInactive(j,1) = 1;
+                            roverInactive(j,2) = (time/stepSize)+1; 
+                            refRoverInactive(j,1) = 1;
+                            refRoverInactive(j,2) = (time/stepSize)+1; 
+                        end
                     end
-                end
+                end 
             end 
-        end 
-    end
+        end
+    end 
     %----------------------------------%
 end
 
