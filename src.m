@@ -7,17 +7,13 @@ clear
 clc
 %---------------------------------------%
 
-%------------%
-% Bookmark: 
-% Unfinished debugging of diagnosis
-%------------% 
 %% Instantiation of Required Classes 
 % Rover Instantiation
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
 rover{1} = activeRover(1, [1, 1], [16, 20], 0.1, "Four Wheel");
 refRover{1} = referenceRover(1, [1, 1], [16, 20], 0.1, "Four Wheel");
-rover{2} = activeRover(1, [2, 1], [18, 20], 0.1, "Four Wheel");
-refRover{2} = activeRover(1, [2, 1], [18, 20], 0.1, "Four Wheel");
+rover{2} = activeRover(1, [3, 1], [18, 20], 0.1, "Four Wheel");
+refRover{2} = activeRover(1, [3, 1], [18, 20], 0.1, "Four Wheel");
 %rover{3} = activeRover(1, [3, 1], [20, 20], 0.1, "Four Wheel");
 %rover{4} = activeRover(1, [4, 1], [22, 20], 0.1, "Four Wheel");
 %rover{5} = activeRover(1, [5, 1], [22, 1], 0.1, "Four Wheel");
@@ -67,6 +63,7 @@ faultTrue = zeros(width(rover),2);
 detectionResiduals = zeros(width(rover),4);
 diagnosisResiduals = zeros(width(rover),3);
 reconfigurationRequest = zeros(width(rover),1);
+slow = zeros(width(rover),1);
 
 %% Environment Initialisation
 % Define map variables 
@@ -216,6 +213,8 @@ for time = 0:stepSize:endTime
             %----------------------------------%
             % LOS Navigation
             findVelocity(rover{n});
+            vEnvironmental = findEnvironmentalVelocity(rover{n},rockField);
+            rover{n}.desiredVelocity = vEnvironmental - (slow(n)*0.03);
             range = distanceToWaypoint(rover{n});
             visibleObstacles = checkForObstacles(rover{n},obsNumber,obsLocation);
             distanceToObs = zeros(length(visibleObstacles),1);
@@ -268,6 +267,8 @@ for time = 0:stepSize:endTime
             %----------------------------------%
             % LOS Navigation
             findVelocity(refRover{n});
+            vEnvironmental = findEnvironmentalVelocity(refRover{n},rockField);
+            refRover{n}.desiredVelocity = vEnvironmental - (slow(n)*0.03);
             range = distanceToWaypoint(refRover{n});
             visibleObstacles = checkForObstacles(refRover{n},obsNumber,obsLocation);
             distanceToObs = zeros(length(visibleObstacles),1);

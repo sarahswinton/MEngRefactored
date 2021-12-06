@@ -77,6 +77,15 @@ classdef objRover < handle
             obj.xo(24,1) = resultantVelocity;
         end
 
+        function v_environmental = findEnvironmentalVelocity(obj,rockField)
+            %   Evaluate and update the environmental desired velocity of the rover object
+            if isinterior(rockField,obj.xo(7),obj.xo(8))
+                v_environmental = 0.05;
+            else 
+                v_environmental = 0.1;
+            end
+        end
+
         function distance = distanceToWaypoint(obj)
             %   Find the distance from the rover to it's next checkpoint.
             xDelta = obj.waypoints(1,obj.waypointCounter)-obj.xo(7);
@@ -215,9 +224,6 @@ classdef objRover < handle
             eDerivative = (e - obj.eVelPrevious)/h;
             obj.velCS = (Kp * e)  + (Ki * obj.eVelIntegral) + (Kd * eDerivative);
             obj.eVelPrevious = e;
-        end 
-
-        function derivativeSegment(obj) 
         end 
 
         function xo = rk4int(obj, h, u)
