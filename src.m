@@ -498,7 +498,7 @@ for time = 0:stepSize:endTime
     for n = 1:1:width(rover)     
         if roverInactive(n,1) == 0 
             for j = n:1:width(rover)
-                if n ~= j
+                if roverInactive(j,1) == 0 
                     distance = sqrt((rover{n}.xo(7)-rover{j}.xo(7))^2 + (rover{n}.xo(8)-rover{j}.xo(8))^2);
                     if distance <= 1.2  && distance > 0.8    % Action to be taken if rovers within 1.2 m of eachother)
                         slow(j) = slow(j) + 1;
