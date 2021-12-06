@@ -491,6 +491,35 @@ for time = 0:stepSize:endTime
             end 
         end 
     end 
+
+    % Traffic Control 
+    slow = zeros(width(rover),1); 
+    for n = 1:1:width(rover)     
+        if roverInactive(n,1) == 0 
+            for j = n:1:width(rover)
+                if n ~= j
+                    distance = sqrt((rover{n}.xo(7)-rover{j}.xo(7))^2 + (rover{n}.xo(8)-rover{j}.xo(8))^2);
+                    if distance <= 1.2  && distance > 0.8    % Action to be taken if rovers within 1.2 m of eachother)
+                        slow(j) = slow(j) + 1;
+                    elseif distance <= 0.8 && distance > 0.35
+                        slow(j) = slow(j) + 2;
+                    elseif distance <= 0.35 
+                        % Mark rover n as crashed
+                        roverInactive(n,1) = 1;
+                        roverInactive(n,2) = (time/stepSize)+1; 
+                        refRoverInactive(n,1) = 1;
+                        refRoverInactive(n,2) = (time/stepSize)+1; 
+                        
+                        % Mark rover j as crashed
+                        roverInactive(j,1) = 1;
+                        roverInactive(j,2) = (time/stepSize)+1; 
+                        refRoverInactive(j,1) = 1;
+                        refRoverInactive(j,2) = (time/stepSize)+1; 
+                    end
+                end
+            end 
+        end 
+    end
     %----------------------------------%
 end
 
