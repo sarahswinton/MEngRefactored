@@ -8,6 +8,7 @@ classdef activeRover < objRover
         diagnosedFaultMode = 0; 
         faultMode = 0;
         faultInjectionTime = 0;
+        faultState = 0;
         residualPosition = 0;
         faultDetected = 0; 
         faultDetectedPrev = 0;
@@ -16,10 +17,10 @@ classdef activeRover < objRover
     end
     
     methods
-        function obj = untitled(inputArg1,inputArg2)
-            %UNTITLED Construct an instance of this class
-            %   Detailed explanation goes here
-            obj.Property1 = inputArg1 + inputArg2;
+        function assignFault(obj,faultMode,injectionTime)
+            % Assign fault type and time to activeRover instance
+            obj.faultMode = faultMode;
+            obj.faultInjectionTime = injectionTime; 
         end
         
         function outputArg = method1(obj,inputArg)

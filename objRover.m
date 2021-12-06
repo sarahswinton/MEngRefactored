@@ -67,6 +67,7 @@ classdef objRover < handle
         end
 
         function assignWaypoints(obj,wayPoints)
+            obj.waypoints = [];
             obj.waypoints(:,:) = wayPoints;
         end
         
@@ -74,6 +75,15 @@ classdef objRover < handle
             %   Evaluate and update the velocity of the rover object
             resultantVelocity = sqrt((obj.xo(1)^2 + (obj.xo(2)^2)));
             obj.xo(24,1) = resultantVelocity;
+        end
+
+        function v_environmental = findEnvironmentalVelocity(obj,rockField)
+            %   Evaluate and update the environmental desired velocity of the rover object
+            if isinterior(rockField,obj.xo(7),obj.xo(8))
+                v_environmental = 0.05;
+            else 
+                v_environmental = 0.1;
+            end
         end
 
         function distance = distanceToWaypoint(obj)
@@ -174,6 +184,53 @@ classdef objRover < handle
             end
         end 
 
+        function psiLOS = adjustForInactiveRovers(obj,objGroup,roverInactive, psiLOS)
+            for n = 1:1:width(roverInactive)
+                if roverInactive(n,1) == 1
+                    % Find range to current inactive rover
+                    xDistance = (obj.xo(7)-objGroup{n}.xo(7));
+                    yDistance = (obj.xo(8)-objGroup{n}.xo(8));
+                    distance = sqrt((xDistance)^2 + (yDistance)^2);
+                
+                    % Find angles between the rover and inactive rover
+                    psiObs =  atan2(yDistance,xDistance);
+                    visionAngle = abs(psiLOS-psiObs);
+                    % Ensure [-pi,pi] boundary visionAngle issues are resolved
+                    if abs(psiLOS) >= (0.95*pi)
+                        visionAngle = abs(abs(psiLOS)-abs(psiObs));
+                    end
+                
+                    % Take evasive action if inactive rover is on path
+                    if obsRange <= 1 && (visionAngle <=0.610865) % +- 35 degrees
+                          if (obj.xo(12) <= psiObs) && (psiLOS < pi/2) && (psiLOS >= 0)
+                            psiLOS = psiObs - atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) > psiObs) && (psiLOS < pi/2) && (psiLOS >= 0)
+                            psiLOS = psiObs + atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) <= psiObs) && (psiLOS >= pi/2) && (psiLOS < pi)
+                            psiLOS = psiObs - atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) > psiObs) && (psiLOS >= pi/2) && (psiLOS < pi)
+                            psiLOS = psiObs + atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) <= psiObs) && (psiLOS >= pi)
+                            psiLOS = psiObs - atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) > psiObs) && (psiLOS >= pi)
+                            psiLOS = psiObs + atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) <= psiObs) && (psiLOS >= -pi/2) && (psiLOS < 0) 
+                            psiLOS = psiObs - atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) > psiObs) && (psiLOS >= -pi/2) && (psiLOS < 0) 
+                            psiLOS = psiObs + atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) <= psiObs) && (psiLOS < -pi/2)&& (psiObs < -pi/2)
+                            psiLOS = psiObs - atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                          elseif (obj.xo(12) > psiObs) && (psiLOS < -pi/2) && (psiObs < -pi/2) 
+                            psiLOS = psiObs + atan((obj.rovSafeRadius*obj.rovSafetyFactor)/obsRange);
+                           elseif (obj.xo(12) <= psiObs) && (psiLOS < -pi/2) && (sign(psiObs) ~= sign(psiLOS)) && visionAngle <= 0.349066
+                            psiLOS = psiLOS - atan((obj.rovSafeRadius*(1/visionAngle))/obsRange);     
+                          end
+                    end
+                                    
+                end 
+            end 
+        end 
+
         function obj = mapPsi(obj,psiLOS,stepSize)
             xDelta = obj.waypoints(1,obj.waypointCounter)-obj.xo(7);
             yDelta = obj.waypoints(2,obj.waypointCounter)-obj.xo(8);
@@ -216,18 +273,15 @@ classdef objRover < handle
             obj.eVelPrevious = e;
         end 
 
-        function derivativeSegment(obj) 
-        end 
-
         function xo = rk4int(obj, h, u)
             %   Integrate rover states using rk4int
             %   x is xo (i.e. the xcurr matrix)
             %   h is the step size
             %   u is the control signal
-            k1 = h*feval(obj.modelName, obj.xo, u);              % evaluate derivative k1
-            k2 = h*feval(obj.modelName, obj.xo+k1/2, u);         % evaluate derivative k2
-            k3 = h*feval(obj.modelName, obj.xo+k2/2, u);         % evaluate derivative k3
-            k4 = h*feval(obj.modelName, obj.xo+k3, u);		    % evaluate derivative k4
+            k1 = h*feval(obj.modelName, obj.xo, u, obj);              % evaluate derivative k1
+            k2 = h*feval(obj.modelName, obj.xo+k1/2, u, obj);         % evaluate derivative k2
+            k3 = h*feval(obj.modelName, obj.xo+k2/2, u, obj);         % evaluate derivative k3
+            k4 = h*feval(obj.modelName, obj.xo+k3, u, obj);		    % evaluate derivative k4
             xo = obj.xo + (k1 + 2*k2 + 2*k3 + k4)/6;		% averaged output
         end 
 

@@ -4,7 +4,7 @@ classdef referenceRover < objRover
     %   Detailed explanation goes here
     
     properties
-        Property1
+        faultState = 0;
     end
     
     methods

@@ -60,7 +60,7 @@
 
 %---------------------------------------------------------------------%
 
-function xdot = Rover_Model_FDIR(xcur, controlSignal, faultMode)
+function xdot = Rover_Model_FDIR(xcur, controlSignal)
 
 %---------------------------------------------------------------------%
 % Motor Modelling
@@ -100,13 +100,13 @@ for j = 1:4
 end
 
 % Inject Actuator Faults
-if faultMode == 2
+if obj.faultMode == 2
     torques(1) = torques(1)*0.5;
     torques(2) = torques(2)*0.5;
-elseif faultMode == 3
+elseif obj.faultMode == 3
     torques(3) = torques(3)*0.5;
     torques(4) = torques(4)*0.5;
-elseif faultMode == 1 
+elseif obj.faultMode == 1 
     torques(1) = 0;
     torques(2) = 0;
     torques(3) = 0;
