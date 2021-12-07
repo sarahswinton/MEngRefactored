@@ -188,414 +188,438 @@ for roverNo = 1:1:length(rover)
     waypoints = [];
 end
 
+%% Data Collection 
+% Process Data
+waypoints = zeros(width(rover)*2,30);
+for n = 1:1:width(rover)
+    for m = 1:1:width(rover{n}.waypoints)
+        waypoints((2*n)-1,m) = rover{n}.waypoints(1,m);
+        waypoints((2*n),m) = rover{n}.waypoints(2,m);
+    end 
+end 
+
+% Store Data 
+% filename = '2021_12_07_Test_Set_Path_Generation_V1.xlsx';
+% writematrix(dataVariableName,filename,'Sheet',testNo,'Range','B2:B126')
+
+% Required Data
+% Test No i.e. sheet number 
+% Coords for each rover 
+
+
+
+
+
+
+
 
 
 %% Assign Faults 
-assignFault(rover{1},1,100);
-
-%% Online Path Following - Dynamic Segment
-for time = 0:stepSize:endTime
-    % Carry Out Simulation For Each Rover 
-    for n = 1:1:length(rover)
-        if n == 1
-            i = i + 1;
-        end
-
-        %----------------------------------%
-        % Run active rover sim
-        if roverInactive(n,1) == 0
-            %----------------------------------%
-            % Data Storage
-            if rem(stepSize,commsInterval) == 0
-                % increment counter after each rover has been processed for the
-                % current time step
-                % Store state 
-                stateOutput(:,i,n) = rover{n}.xo;
-                timeOutput(i,n) = time;
-            end
-            %----------------------------------%
-            
-    
-            %----------------------------------%
-            % LOS Navigation
-            findVelocity(rover{n});
-            vEnvironmental = findEnvironmentalVelocity(rover{n},rockField);
-            rover{n}.desiredVelocity = vEnvironmental - (slow(n)*0.03);
-            range = distanceToWaypoint(rover{n});
-            visibleObstacles = checkForObstacles(rover{n},obsNumber,obsLocation);
-            distanceToObs = zeros(length(visibleObstacles),1);
-            for j = 1:1:length(visibleObstacles)
-                xDelta = visibleObstacles(1)-rover{n}.waypoints(1,rover{n}.waypointCounter);
-                yDelta = visibleObstacles(2)-rover{n}.waypoints(2,rover{n}.waypointCounter);
-                obsRange = sqrt((xDelta)^2+(yDelta)^2);
-                distanceToObs(j) = obsRange;
-            end
-            waypointIncrementer(rover{n}, range, min(distanceToObs)); 
-            if rover{n}.waypointCounter > width(rover{n}.waypoints)
-                fprintf('Rover Number %i reached its final waypoint at time: %0.2f \n', n, time)
-                roverInactive(n,1) = 1;
-                roverInactive(n,2) = (time/stepSize)+1; 
-            end
-            if roverInactive(n,1) == 0
-                LOSAngle = findLOSAngle(rover{n});
-                LOSAngle = adjustForObstacles(rover{n}, visibleObstacles, LOSAngle);
-                % LOSAngle = adjustForInactiveRovers(rover{n},rover,roverInactive,LOSAngle);
-                mapPsi(rover{n}, LOSAngle, stepSize);
-                %----------------------------------%
-        
-        
-                %----------------------------------%
-                % Control Section
-                headingControl(rover{n}, headingGains, stepSize);
-                velocityControl(rover{n}, velocityGains, stepSize);
-                u = [rover{n}.velCS;rover{n}.psiCS];
-                %----------------------------------%
-        
-        
-                %----------------------------------%
-                % Integral Section
-                rover{n}.xo = rk4int(rover{n},stepSize,u);
-                %----------------------------------%
-
-                %----------------------------------%
-                % FDIR Section
-                if time == rover{n}.faultInjectionTime
-                    rover{n}.faultState = rover{n}.faultMode;
-                end
-                %----------------------------------%
-            end
-        end
-        %----------------------------------%
-
-
-        %----------------------------------%
-        % Run Reference Rover Sim
-        if refRoverInactive(n,1) == 0 
-            %----------------------------------%
-            % LOS Navigation
-            findVelocity(refRover{n});
-            vEnvironmental = findEnvironmentalVelocity(refRover{n},rockField);
-            refRover{n}.desiredVelocity = vEnvironmental - (slow(n)*0.03);
-            range = distanceToWaypoint(refRover{n});
-            visibleObstacles = checkForObstacles(refRover{n},obsNumber,obsLocation);
-            distanceToObs = zeros(length(visibleObstacles),1);
-            for j = 1:1:length(visibleObstacles)
-                xDelta = visibleObstacles(1)-refRover{n}.waypoints(1,refRover{n}.waypointCounter);
-                yDelta = visibleObstacles(2)-refRover{n}.waypoints(2,refRover{n}.waypointCounter);
-                obsRange = sqrt((xDelta)^2+(yDelta)^2);
-                distanceToObs(j) = obsRange;
-            end
-            waypointIncrementer(refRover{n}, range, min(distanceToObs)); 
-            if refRover{n}.waypointCounter > width(refRover{n}.waypoints)
-                fprintf('Ref Rover Number %i reached its final waypoint at time: %0.2f \n', n, time)
-                refRoverInactive(n,1) = 1;
-                refRoverInactive(n,2) = (time/stepSize)+1; 
-            end
-            %----------------------------------%
-    
-            if refRoverInactive(n,1) == 0
-                %----------------------------------%
-                LOSAngle = findLOSAngle(refRover{n});
-                LOSAngle = adjustForObstacles(refRover{n}, visibleObstacles, LOSAngle);
-                % LOSAngle = adjustForInactiveRovers(refRover{n},refRover,roverInactive,LOSAngle);
-                mapPsi(refRover{n}, LOSAngle, stepSize);
-                %----------------------------------%
-        
-        
-                %----------------------------------%
-                % Control Section
-                headingControl(refRover{n}, headingGains, stepSize);
-                velocityControl(refRover{n}, velocityGains, stepSize);
-                u = [refRover{n}.velCS;refRover{n}.psiCS];
-                %----------------------------------%
-        
-        
-                %----------------------------------%
-                % Integral Section
-                refRover{n}.xo = rk4int(refRover{n},stepSize,u);
-                %----------------------------------%
-            end
-        end
-    end
-    %----------------------------------%
-
-    %----------------------------------%
-    % Health Monitoring Section
-    
-    % Assign rover locations for collision checking 
-    xPos = zeros(width(rover),1);
-    yPos = zeros(width(rover),1);
-    psi = zeros(width(rover),1);
-    for n = 1:1:width(rover)
-        xPos(n) = rover{n}.xo(7);
-        yPos(n) = rover{n}.xo(8);
-        psi(n) = rover{n}.xo(12);
-    end
-    assignRoverLocation(healthMonitor,xPos,yPos)
-    assignRoverYaw(healthMonitor,psi)
-    
-    % Check for rover collisions
-    crashStatus = collisionCheck(healthMonitor);
-    
-    % Fault detection
-    for n = 1:1:width(rover)
-        if faultTrue(n,1) == 0
-            positionResidual = sqrt((rover{n}.xo(7)-refRover{n}.xo(7))^2 + (rover{n}.xo(8)-refRover{n}.xo(8))^2);
-            faultTrue(n) = faultDetector(healthMonitor,n,positionResidual,residualThreshold);
-            if faultTrue(n,1) == 1
-                faultTrue(n,2) = time;
-                detectionResiduals(n,1) = positionResidual;
-                detectionResiduals(n,2) = rover{n}.xo(12)-refRover{n}.xo(12);
-                detectionResiduals(n,3) = rover{n}.xo(7);
-                detectionResiduals(n,4) = rover{n}.xo(8);
-                fprintf("Fault detected on rover %i at %0.2f s. \n", n, time)
-            end 
-        end
-    end
-
-    % Fault Isolation 
-    for n = 1:1:width(rover)
-        if faultTrue(n,1) == 1 && time == (faultTrue(n,2) + 1)
-            fprintf("Start diagnosis \n")
-            diagnosisResiduals(n,1) = sqrt((rover{n}.xo(7)-refRover{n}.xo(7))^2 + (rover{n}.xo(8)-refRover{n}.xo(8))^2);
-            diagnosisResiduals(n,2) = rover{n}.xo(12)-refRover{n}.xo(12);
-            diagnosisResiduals(n,3) = sqrt((rover{n}.xo(7)-detectionResiduals(n,3))^2+(rover{n}.xo(8)-detectionResiduals(n,4))^2);
-
-            positionResidual = diagnosisResiduals(n,1) - detectionResiduals(n,1);
-            yawResidual = diagnosisResiduals(n,2) - detectionResiduals(n,2);
-            poseDeltaResidual = diagnosisResiduals(n,3);
-            
-            if positionResidual <= 0.01
-                faultType = 2;
-            elseif yawResidual <= 0.1
-                faultType = 1;
-                reconfigurationRequest(n) = 1;
-            elseif abs(poseDeltaResidual) <= (0.25*rover{n}.desiredVelocity)
-                faultType = 1; 
-                reconfigurationRequest(n) = 1;
-            else
-                faultType = 4;
-            end 
-            assignFault(healthMonitor,n,faultType);
-        end 
-    end 
-
-    % Target Reallocation  
-    if reconfigMode == 1
-        for n = 1:1:width(rover)
-            if reconfigurationRequest(n) == 1
-                % Find ETA of each rover
-                eta = zeros(width(rover),1);
-                for m = 1:1:width(rover)
-                    if m == n 
-                        eta(m) = 10000;
-                    elseif roverInactive(n,1) == 0 
-                        d = sqrt((rover{n}.targetPoint(1)-rover{m}.targetPoint(1))^2+(rover{n}.targetPoint(2)-rover{m}.targetPoint(2))^2);
-                        v = rover{m}.desiredVelocity; 
-                        t = d/v;
-                        eta(m) = etaPlanned(m) + t;  
-                    else 
-                        eta(m) = 10000; 
-                    end 
-                end
-                % Select best rover
-                [minEta, minEtaIndex] = min(eta); 
-                fprintf("The closest rover for allocation is %i. \n", minEtaIndex)
-                % Add reallocated target 
-                % update waypoints
-                % assign waypoints
-                updatedWP = [];
-                updatedWP(1,:) = [rover{minEtaIndex}.waypoints(1,:) rover{n}.targetPoint(1)];
-                updatedWP(2,:) = [rover{minEtaIndex}.waypoints(2,:) rover{n}.targetPoint(2)];
-                assignWaypoints(rover{minEtaIndex},updatedWP);
-                assignWaypoints(refRover{minEtaIndex},updatedWP);
-                % Return reallocation
-                reconfigurationRequest(n) = 0;
-            end 
-        end
-    end 
-
-
-    % Path Blending 
-    if reconfigMode == 2
-        distanceBetweenRovers = zeros(width(rover),1);
-        newWaypointsX = [];
-        newWaypointsY = [];
-        for n = 1:1:width(rover)
-            if reconfigurationRequest(n) == 1
-                for j = 1:1:width(rover)
-                    if n ~= j && (roverInactive(j,1) == 0)
-                        distanceBetweenRovers(j) = sqrt((rover{n}.xo(7)-rover{j}.xo(7))^2 + (rover{n}.xo(8)-rover{j}.xo(8))^2);
-                    else
-                        distanceBetweenRovers(j) = 10000;       % Number large enough that it wont be selected 
-                    end 
-                end
-    
-                [minDistance, distanceIndex] = min(distanceBetweenRovers); 
-                waypoints = rover{distanceIndex}.waypoints;
-                waypointsCrashedRover = rover{n}.waypoints;
-    
-                % Compare WP Number for crashed rover and chosen rover
-                waypointRemaining = zeros(2,1);
-                waypointRemaining(1) = width(rover{n}.waypoints) - rover{n}.waypointCounter;
-                waypointRemaining(2) = width(rover{distanceIndex}.waypoints) - rover{distanceIndex}.waypointCounter;
-                % Select rover with fewer remaining waypoints
-                [minWPRemain, waypointIndex] = min(waypointRemaining);
-                if waypointIndex == 1
-                    currentWPNumber = rover{n}.waypointCounter;
-                else 
-                    currentWPNumber = rover{distanceIndex}.waypointCounter;
-                end 
-                
-                % Set max waypoints 
-                if width(rover{n}.waypoints) >= width(rover{distanceIndex}.waypoints)
-                    maxWaypoints = width(rover{distanceIndex}.waypoints);
-                else 
-                    maxWaypoints = width(rover{n}.waypoints);
-                end 
-    
-                % Replace future WP with blended path WP
-                for k = maxWaypoints:-1:currentWPNumber
-                    midpointX = (rover{distanceIndex}.waypoints(1,k) + rover{n}.waypoints(1,k))/2;
-                    midpointY = (rover{distanceIndex}.waypoints(2,k) + rover{n}.waypoints(2,k))/2;  
-    %                 if k == maxWP 
-    %                     targetSafe = 1; 
-    %                     distanceBetweenTargets = zeros(roverNumber,1);
-    %                     while targetSafe == 1
-    %                         for checkTargets = 1:1:roverNumber
-    %                             if checkTargets ~= n && checkTargets ~= j
-    %                                 distanceBetweenTargets(checkTargets) = (sqrt((roverTargetsX(checkTargets)-midpointX)^2+(roverTargetsY(checkTargets)-midpointY)^2));
-    %                             end 
-    %                         end
-    %                         if min(distanceBetweenTargets(distanceBetweenTargets>0)) < 1 
-    %                             targetSafe = 1;
-    %                             midpointY = midpointY - 0.1;
-    %                         else
-    %                             targetSafe = 0;
-    %                         end 
-    %                     end
-    %                 end
-                    newWaypointsX = [newWaypointsX midpointX];
-                    newWaypointsY = [newWaypointsY midpointY];
-                    
-                end 
-
-                newWaypointsX = [newWaypointsX rover{distanceIndex}.xo(7)];
-                newWaypointsY = [newWaypointsY rover{distanceIndex}.xo(8)];
-
-
-                % Add rover's previous waypoints to the list for correct
-                % plotting output
-                for wpNo = (rover{distanceIndex}.waypointCounter-1):-1:1
-                    newWaypointsX = [newWaypointsX rover{distanceIndex}.waypoints(1,wpNo)];
-                    newWaypointsY = [newWaypointsY rover{distanceIndex}.waypoints(2,wpNo)];
-                end 
-            
-                pathBlendWaypoints = [flip(newWaypointsX);flip(newWaypointsY)];
-                assignWaypoints(rover{distanceIndex},pathBlendWaypoints);
-                assignWaypoints(refRover{distanceIndex},pathBlendWaypoints);
-                % Return reallocation
-                reconfigurationRequest(n) = 0;
-    
-            end 
-        end 
-    end 
-
-    % Traffic Control 
-    if trafficControlEnabled == 1
-        slow = zeros(width(rover),1); 
-        for n = 1:1:width(rover)     
-            if roverInactive(n,1) == 0 
-                for j = n+1:1:width(rover)
-                    if roverInactive(j,1) == 0 
-                        distance = sqrt((rover{n}.xo(7)-rover{j}.xo(7))^2 + (rover{n}.xo(8)-rover{j}.xo(8))^2);
-                        if distance <= 1.2  && distance > 0.8    % Action to be taken if rovers within 1.2 m of eachother)
-                            slow(j) = slow(j) + 1;
-                        elseif distance <= 0.8 && distance > 0.35
-                            slow(j) = slow(j) + 2;
-                        elseif distance <= 0.35 
-                            % Mark rover n as crashed
-                            fprintf("A crash has occured \n")
-                            roverInactive(n,1) = 1;
-                            roverInactive(n,2) = (time/stepSize)+1; 
-                            refRoverInactive(n,1) = 1;
-                            refRoverInactive(n,2) = (time/stepSize)+1; 
-                            
-                            % Mark rover j as crashed
-                            roverInactive(j,1) = 1;
-                            roverInactive(j,2) = (time/stepSize)+1; 
-                            refRoverInactive(j,1) = 1;
-                            refRoverInactive(j,2) = (time/stepSize)+1; 
-                        end
-                    end
-                end 
-            end 
-        end
-    end 
-    %----------------------------------%
-end
-
-
-
-
-
-%% Terminal Segment 
-
-% Data Prep: Remove zeros from the end of the stateOutput Array
-lastFullColumn = zeros(width(rover),1);
-fixStep = 0;
-for n = 1:1:width(rover)
-    if roverInactive(n,2) == 0
-        lastFullColumn(n) = timeSteps;
-    else 
-        lastFullColumn(n) = floor(roverInactive(n,2));
-        % Check last full column is correct
-        if stateOutput(7,(1:lastFullColumn(n)),n) == 0
-            fixStep = 1;
-        end 
-        % if not, remove empty columns until it is 
-        while fixStep == 1
-            lastFullColumn(n) = lastFullColumn(n)-1;
-            if stateOutput(7,(1:lastFullColumn(roverNo)),roverNo) ~= 0
-                fixStep = 0;
-            end 
-        end 
-    end 
-end
-
-% Plot rovers within 2D Martian Environment    
-clf
-figure(1)
-axis([0 xBoundary 0 yBoundary])
-xlabel('X Position (m)','fontsize',14)
-ylabel('Y Position (m)','fontsize',14)
-grid on 
-hold on
-% Plot environment objects
-plot(steepSlopeOne, 'FaceColor', 'red', 'FaceAlpha', 0.2)
-plot(steepSlopeTwo, 'FaceColor', 'red', 'FaceAlpha', 0.2)
-plot(steepSlopeThree, 'FaceColor', 'red', 'FaceAlpha', 0.2)
-plot(steepSlopeFour, 'FaceColor', 'red', 'FaceAlpha', 0.2)
-plot(obstacleOneP, 'FaceColor', 'black', 'FaceAlpha', 0.8) 
-plot(obstacleTwoP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
-plot(obstacleThreeP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
-plot(obstacleFourP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
-plot(rockField, 'FaceColor', 'green', 'FaceAlpha', 0.4)
-hold on 
-% Plot Obstacles
-th = 0:pi/50:2*pi;
-for obsNo = 1:1:width(obsLocation)
-    xObsRad.obsNo = rover{1}.obsSafeRadius * cos(th) + obsLocation(1,obsNo);
-    yObsRad.obsNo = rover{1}.obsSafeRadius * sin(th) + obsLocation(2,obsNo);
-    plot(xObsRad.obsNo,yObsRad.obsNo, 'b')
-    hold on
-end
-plot(obsLocation(1,:),obsLocation(2,:), 'o','MarkerSize',5, 'MarkerFaceColor',[0.75, 0, 0.75])
-hold on 
-% Plot rover paths and waypoints
-for roverNo = 1:1:width(rover)
-    plot(rover{roverNo}.waypoints(1,:),rover{roverNo}.waypoints(2,:), "ko")
-    hold on
-    plot(stateOutput(7,(1:lastFullColumn(roverNo)),roverNo),stateOutput(8,(1:lastFullColumn(roverNo)),roverNo), "r-")
-end
-legend('','','','','','','','','','','', 'Waypoints','Measured Path')
+% assignFault(rover{1},1,100);
+% 
+% %% Online Path Following - Dynamic Segment
+% for time = 0:stepSize:endTime
+%     % Carry Out Simulation For Each Rover 
+%     for n = 1:1:length(rover)
+%         if n == 1
+%             i = i + 1;
+%         end
+% 
+%         %----------------------------------%
+%         % Run active rover sim
+%         if roverInactive(n,1) == 0
+%             %----------------------------------%
+%             % Data Storage
+%             if rem(stepSize,commsInterval) == 0
+%                 % increment counter after each rover has been processed for the
+%                 % current time step
+%                 % Store state 
+%                 stateOutput(:,i,n) = rover{n}.xo;
+%                 timeOutput(i,n) = time;
+%             end
+%             %----------------------------------%
+%             
+%     
+%             %----------------------------------%
+%             % LOS Navigation
+%             findVelocity(rover{n});
+%             vEnvironmental = findEnvironmentalVelocity(rover{n},rockField);
+%             rover{n}.desiredVelocity = vEnvironmental - (slow(n)*0.03);
+%             range = distanceToWaypoint(rover{n});
+%             visibleObstacles = checkForObstacles(rover{n},obsNumber,obsLocation);
+%             distanceToObs = zeros(length(visibleObstacles),1);
+%             for j = 1:1:length(visibleObstacles)
+%                 xDelta = visibleObstacles(1)-rover{n}.waypoints(1,rover{n}.waypointCounter);
+%                 yDelta = visibleObstacles(2)-rover{n}.waypoints(2,rover{n}.waypointCounter);
+%                 obsRange = sqrt((xDelta)^2+(yDelta)^2);
+%                 distanceToObs(j) = obsRange;
+%             end
+%             waypointIncrementer(rover{n}, range, min(distanceToObs)); 
+%             if rover{n}.waypointCounter > width(rover{n}.waypoints)
+%                 fprintf('Rover Number %i reached its final waypoint at time: %0.2f \n', n, time)
+%                 roverInactive(n,1) = 1;
+%                 roverInactive(n,2) = (time/stepSize)+1; 
+%             end
+%             if roverInactive(n,1) == 0
+%                 LOSAngle = findLOSAngle(rover{n});
+%                 LOSAngle = adjustForObstacles(rover{n}, visibleObstacles, LOSAngle);
+%                 % LOSAngle = adjustForInactiveRovers(rover{n},rover,roverInactive,LOSAngle);
+%                 mapPsi(rover{n}, LOSAngle, stepSize);
+%                 %----------------------------------%
+%         
+%         
+%                 %----------------------------------%
+%                 % Control Section
+%                 headingControl(rover{n}, headingGains, stepSize);
+%                 velocityControl(rover{n}, velocityGains, stepSize);
+%                 u = [rover{n}.velCS;rover{n}.psiCS];
+%                 %----------------------------------%
+%         
+%         
+%                 %----------------------------------%
+%                 % Integral Section
+%                 rover{n}.xo = rk4int(rover{n},stepSize,u);
+%                 %----------------------------------%
+% 
+%                 %----------------------------------%
+%                 % FDIR Section
+%                 if time == rover{n}.faultInjectionTime
+%                     rover{n}.faultState = rover{n}.faultMode;
+%                 end
+%                 %----------------------------------%
+%             end
+%         end
+%         %----------------------------------%
+% 
+% 
+%         %----------------------------------%
+%         % Run Reference Rover Sim
+%         if refRoverInactive(n,1) == 0 
+%             %----------------------------------%
+%             % LOS Navigation
+%             findVelocity(refRover{n});
+%             vEnvironmental = findEnvironmentalVelocity(refRover{n},rockField);
+%             refRover{n}.desiredVelocity = vEnvironmental - (slow(n)*0.03);
+%             range = distanceToWaypoint(refRover{n});
+%             visibleObstacles = checkForObstacles(refRover{n},obsNumber,obsLocation);
+%             distanceToObs = zeros(length(visibleObstacles),1);
+%             for j = 1:1:length(visibleObstacles)
+%                 xDelta = visibleObstacles(1)-refRover{n}.waypoints(1,refRover{n}.waypointCounter);
+%                 yDelta = visibleObstacles(2)-refRover{n}.waypoints(2,refRover{n}.waypointCounter);
+%                 obsRange = sqrt((xDelta)^2+(yDelta)^2);
+%                 distanceToObs(j) = obsRange;
+%             end
+%             waypointIncrementer(refRover{n}, range, min(distanceToObs)); 
+%             if refRover{n}.waypointCounter > width(refRover{n}.waypoints)
+%                 fprintf('Ref Rover Number %i reached its final waypoint at time: %0.2f \n', n, time)
+%                 refRoverInactive(n,1) = 1;
+%                 refRoverInactive(n,2) = (time/stepSize)+1; 
+%             end
+%             %----------------------------------%
+%     
+%             if refRoverInactive(n,1) == 0
+%                 %----------------------------------%
+%                 LOSAngle = findLOSAngle(refRover{n});
+%                 LOSAngle = adjustForObstacles(refRover{n}, visibleObstacles, LOSAngle);
+%                 % LOSAngle = adjustForInactiveRovers(refRover{n},refRover,roverInactive,LOSAngle);
+%                 mapPsi(refRover{n}, LOSAngle, stepSize);
+%                 %----------------------------------%
+%         
+%         
+%                 %----------------------------------%
+%                 % Control Section
+%                 headingControl(refRover{n}, headingGains, stepSize);
+%                 velocityControl(refRover{n}, velocityGains, stepSize);
+%                 u = [refRover{n}.velCS;refRover{n}.psiCS];
+%                 %----------------------------------%
+%         
+%         
+%                 %----------------------------------%
+%                 % Integral Section
+%                 refRover{n}.xo = rk4int(refRover{n},stepSize,u);
+%                 %----------------------------------%
+%             end
+%         end
+%     end
+%     %----------------------------------%
+% 
+%     %----------------------------------%
+%     % Health Monitoring Section
+%     
+%     % Assign rover locations for collision checking 
+%     xPos = zeros(width(rover),1);
+%     yPos = zeros(width(rover),1);
+%     psi = zeros(width(rover),1);
+%     for n = 1:1:width(rover)
+%         xPos(n) = rover{n}.xo(7);
+%         yPos(n) = rover{n}.xo(8);
+%         psi(n) = rover{n}.xo(12);
+%     end
+%     assignRoverLocation(healthMonitor,xPos,yPos)
+%     assignRoverYaw(healthMonitor,psi)
+%     
+%     % Check for rover collisions
+%     crashStatus = collisionCheck(healthMonitor);
+%     
+%     % Fault detection
+%     for n = 1:1:width(rover)
+%         if faultTrue(n,1) == 0
+%             positionResidual = sqrt((rover{n}.xo(7)-refRover{n}.xo(7))^2 + (rover{n}.xo(8)-refRover{n}.xo(8))^2);
+%             faultTrue(n) = faultDetector(healthMonitor,n,positionResidual,residualThreshold);
+%             if faultTrue(n,1) == 1
+%                 faultTrue(n,2) = time;
+%                 detectionResiduals(n,1) = positionResidual;
+%                 detectionResiduals(n,2) = rover{n}.xo(12)-refRover{n}.xo(12);
+%                 detectionResiduals(n,3) = rover{n}.xo(7);
+%                 detectionResiduals(n,4) = rover{n}.xo(8);
+%                 fprintf("Fault detected on rover %i at %0.2f s. \n", n, time)
+%             end 
+%         end
+%     end
+% 
+%     % Fault Isolation 
+%     for n = 1:1:width(rover)
+%         if faultTrue(n,1) == 1 && time == (faultTrue(n,2) + 1)
+%             fprintf("Start diagnosis \n")
+%             diagnosisResiduals(n,1) = sqrt((rover{n}.xo(7)-refRover{n}.xo(7))^2 + (rover{n}.xo(8)-refRover{n}.xo(8))^2);
+%             diagnosisResiduals(n,2) = rover{n}.xo(12)-refRover{n}.xo(12);
+%             diagnosisResiduals(n,3) = sqrt((rover{n}.xo(7)-detectionResiduals(n,3))^2+(rover{n}.xo(8)-detectionResiduals(n,4))^2);
+% 
+%             positionResidual = diagnosisResiduals(n,1) - detectionResiduals(n,1);
+%             yawResidual = diagnosisResiduals(n,2) - detectionResiduals(n,2);
+%             poseDeltaResidual = diagnosisResiduals(n,3);
+%             
+%             if positionResidual <= 0.01
+%                 faultType = 2;
+%             elseif yawResidual <= 0.1
+%                 faultType = 1;
+%                 reconfigurationRequest(n) = 1;
+%             elseif abs(poseDeltaResidual) <= (0.25*rover{n}.desiredVelocity)
+%                 faultType = 1; 
+%                 reconfigurationRequest(n) = 1;
+%             else
+%                 faultType = 4;
+%             end 
+%             assignFault(healthMonitor,n,faultType);
+%         end 
+%     end 
+% 
+%     % Target Reallocation  
+%     if reconfigMode == 1
+%         for n = 1:1:width(rover)
+%             if reconfigurationRequest(n) == 1
+%                 % Find ETA of each rover
+%                 eta = zeros(width(rover),1);
+%                 for m = 1:1:width(rover)
+%                     if m == n 
+%                         eta(m) = 10000;
+%                     elseif roverInactive(n,1) == 0 
+%                         d = sqrt((rover{n}.targetPoint(1)-rover{m}.targetPoint(1))^2+(rover{n}.targetPoint(2)-rover{m}.targetPoint(2))^2);
+%                         v = rover{m}.desiredVelocity; 
+%                         t = d/v;
+%                         eta(m) = etaPlanned(m) + t;  
+%                     else 
+%                         eta(m) = 10000; 
+%                     end 
+%                 end
+%                 % Select best rover
+%                 [minEta, minEtaIndex] = min(eta); 
+%                 fprintf("The closest rover for allocation is %i. \n", minEtaIndex)
+%                 % Add reallocated target 
+%                 % update waypoints
+%                 % assign waypoints
+%                 updatedWP = [];
+%                 updatedWP(1,:) = [rover{minEtaIndex}.waypoints(1,:) rover{n}.targetPoint(1)];
+%                 updatedWP(2,:) = [rover{minEtaIndex}.waypoints(2,:) rover{n}.targetPoint(2)];
+%                 assignWaypoints(rover{minEtaIndex},updatedWP);
+%                 assignWaypoints(refRover{minEtaIndex},updatedWP);
+%                 % Return reallocation
+%                 reconfigurationRequest(n) = 0;
+%             end 
+%         end
+%     end 
+% 
+% 
+%     % Path Blending 
+%     if reconfigMode == 2
+%         distanceBetweenRovers = zeros(width(rover),1);
+%         newWaypointsX = [];
+%         newWaypointsY = [];
+%         for n = 1:1:width(rover)
+%             if reconfigurationRequest(n) == 1
+%                 for j = 1:1:width(rover)
+%                     if n ~= j && (roverInactive(j,1) == 0)
+%                         distanceBetweenRovers(j) = sqrt((rover{n}.xo(7)-rover{j}.xo(7))^2 + (rover{n}.xo(8)-rover{j}.xo(8))^2);
+%                     else
+%                         distanceBetweenRovers(j) = 10000;       % Number large enough that it wont be selected 
+%                     end 
+%                 end
+%     
+%                 [minDistance, distanceIndex] = min(distanceBetweenRovers); 
+%                 waypoints = rover{distanceIndex}.waypoints;
+%                 waypointsCrashedRover = rover{n}.waypoints;
+%     
+%                 % Compare WP Number for crashed rover and chosen rover
+%                 waypointRemaining = zeros(2,1);
+%                 waypointRemaining(1) = width(rover{n}.waypoints) - rover{n}.waypointCounter;
+%                 waypointRemaining(2) = width(rover{distanceIndex}.waypoints) - rover{distanceIndex}.waypointCounter;
+%                 % Select rover with fewer remaining waypoints
+%                 [minWPRemain, waypointIndex] = min(waypointRemaining);
+%                 if waypointIndex == 1
+%                     currentWPNumber = rover{n}.waypointCounter;
+%                 else 
+%                     currentWPNumber = rover{distanceIndex}.waypointCounter;
+%                 end 
+%                 
+%                 % Set max waypoints 
+%                 if width(rover{n}.waypoints) >= width(rover{distanceIndex}.waypoints)
+%                     maxWaypoints = width(rover{distanceIndex}.waypoints);
+%                 else 
+%                     maxWaypoints = width(rover{n}.waypoints);
+%                 end 
+%     
+%                 % Replace future WP with blended path WP
+%                 for k = maxWaypoints:-1:currentWPNumber
+%                     midpointX = (rover{distanceIndex}.waypoints(1,k) + rover{n}.waypoints(1,k))/2;
+%                     midpointY = (rover{distanceIndex}.waypoints(2,k) + rover{n}.waypoints(2,k))/2;  
+%     %                 if k == maxWP 
+%     %                     targetSafe = 1; 
+%     %                     distanceBetweenTargets = zeros(roverNumber,1);
+%     %                     while targetSafe == 1
+%     %                         for checkTargets = 1:1:roverNumber
+%     %                             if checkTargets ~= n && checkTargets ~= j
+%     %                                 distanceBetweenTargets(checkTargets) = (sqrt((roverTargetsX(checkTargets)-midpointX)^2+(roverTargetsY(checkTargets)-midpointY)^2));
+%     %                             end 
+%     %                         end
+%     %                         if min(distanceBetweenTargets(distanceBetweenTargets>0)) < 1 
+%     %                             targetSafe = 1;
+%     %                             midpointY = midpointY - 0.1;
+%     %                         else
+%     %                             targetSafe = 0;
+%     %                         end 
+%     %                     end
+%     %                 end
+%                     newWaypointsX = [newWaypointsX midpointX];
+%                     newWaypointsY = [newWaypointsY midpointY];
+%                     
+%                 end 
+% 
+%                 newWaypointsX = [newWaypointsX rover{distanceIndex}.xo(7)];
+%                 newWaypointsY = [newWaypointsY rover{distanceIndex}.xo(8)];
+% 
+% 
+%                 % Add rover's previous waypoints to the list for correct
+%                 % plotting output
+%                 for wpNo = (rover{distanceIndex}.waypointCounter-1):-1:1
+%                     newWaypointsX = [newWaypointsX rover{distanceIndex}.waypoints(1,wpNo)];
+%                     newWaypointsY = [newWaypointsY rover{distanceIndex}.waypoints(2,wpNo)];
+%                 end 
+%             
+%                 pathBlendWaypoints = [flip(newWaypointsX);flip(newWaypointsY)];
+%                 assignWaypoints(rover{distanceIndex},pathBlendWaypoints);
+%                 assignWaypoints(refRover{distanceIndex},pathBlendWaypoints);
+%                 % Return reallocation
+%                 reconfigurationRequest(n) = 0;
+%     
+%             end 
+%         end 
+%     end 
+% 
+%     % Traffic Control 
+%     if trafficControlEnabled == 1
+%         slow = zeros(width(rover),1); 
+%         for n = 1:1:width(rover)     
+%             if roverInactive(n,1) == 0 
+%                 for j = n+1:1:width(rover)
+%                     if roverInactive(j,1) == 0 
+%                         distance = sqrt((rover{n}.xo(7)-rover{j}.xo(7))^2 + (rover{n}.xo(8)-rover{j}.xo(8))^2);
+%                         if distance <= 1.2  && distance > 0.8    % Action to be taken if rovers within 1.2 m of eachother)
+%                             slow(j) = slow(j) + 1;
+%                         elseif distance <= 0.8 && distance > 0.35
+%                             slow(j) = slow(j) + 2;
+%                         elseif distance <= 0.35 
+%                             % Mark rover n as crashed
+%                             fprintf("A crash has occured \n")
+%                             roverInactive(n,1) = 1;
+%                             roverInactive(n,2) = (time/stepSize)+1; 
+%                             refRoverInactive(n,1) = 1;
+%                             refRoverInactive(n,2) = (time/stepSize)+1; 
+%                             
+%                             % Mark rover j as crashed
+%                             roverInactive(j,1) = 1;
+%                             roverInactive(j,2) = (time/stepSize)+1; 
+%                             refRoverInactive(j,1) = 1;
+%                             refRoverInactive(j,2) = (time/stepSize)+1; 
+%                         end
+%                     end
+%                 end 
+%             end 
+%         end
+%     end 
+%     %----------------------------------%
+% end
+% 
+% 
+% 
+% 
+% 
+% %% Terminal Segment 
+% 
+% % Data Prep: Remove zeros from the end of the stateOutput Array
+% lastFullColumn = zeros(width(rover),1);
+% fixStep = 0;
+% for n = 1:1:width(rover)
+%     if roverInactive(n,2) == 0
+%         lastFullColumn(n) = timeSteps;
+%     else 
+%         lastFullColumn(n) = floor(roverInactive(n,2));
+%         % Check last full column is correct
+%         if stateOutput(7,(1:lastFullColumn(n)),n) == 0
+%             fixStep = 1;
+%         end 
+%         % if not, remove empty columns until it is 
+%         while fixStep == 1
+%             lastFullColumn(n) = lastFullColumn(n)-1;
+%             if stateOutput(7,(1:lastFullColumn(roverNo)),roverNo) ~= 0
+%                 fixStep = 0;
+%             end 
+%         end 
+%     end 
+% end
+% 
+% % Plot rovers within 2D Martian Environment    
+% clf
+% figure(1)
+% axis([0 xBoundary 0 yBoundary])
+% xlabel('X Position (m)','fontsize',14)
+% ylabel('Y Position (m)','fontsize',14)
+% grid on 
+% hold on
+% % Plot environment objects
+% plot(steepSlopeOne, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+% plot(steepSlopeTwo, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+% plot(steepSlopeThree, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+% plot(steepSlopeFour, 'FaceColor', 'red', 'FaceAlpha', 0.2)
+% plot(obstacleOneP, 'FaceColor', 'black', 'FaceAlpha', 0.8) 
+% plot(obstacleTwoP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
+% plot(obstacleThreeP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
+% plot(obstacleFourP, 'FaceColor', 'black', 'FaceAlpha', 0.8)
+% plot(rockField, 'FaceColor', 'green', 'FaceAlpha', 0.4)
+% hold on 
+% % Plot Obstacles
+% th = 0:pi/50:2*pi;
+% for obsNo = 1:1:width(obsLocation)
+%     xObsRad.obsNo = rover{1}.obsSafeRadius * cos(th) + obsLocation(1,obsNo);
+%     yObsRad.obsNo = rover{1}.obsSafeRadius * sin(th) + obsLocation(2,obsNo);
+%     plot(xObsRad.obsNo,yObsRad.obsNo, 'b')
+%     hold on
+% end
+% plot(obsLocation(1,:),obsLocation(2,:), 'o','MarkerSize',5, 'MarkerFaceColor',[0.75, 0, 0.75])
+% hold on 
+% % Plot rover paths and waypoints
+% for roverNo = 1:1:width(rover)
+%     plot(rover{roverNo}.waypoints(1,:),rover{roverNo}.waypoints(2,:), "ko")
+%     hold on
+%     plot(stateOutput(7,(1:lastFullColumn(roverNo)),roverNo),stateOutput(8,(1:lastFullColumn(roverNo)),roverNo), "r-")
+% end
+% legend('','','','','','','','','','','', 'Waypoints','Measured Path')
