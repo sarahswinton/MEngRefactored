@@ -10,14 +10,14 @@ clc
 %% Instantiation of Required Classes 
 % Rover Instantiation
 % rover{n} = typeOfRover(roverId, startPoint, targetPoint, desiredVelocity, roverType)
-rover{1} = activeRover(1, [1, 1], [22, 5], 0.1, "Four Wheel");
-refRover{1} = referenceRover(1, [1, 1], [22, 5], 0.1, "Four Wheel");
-rover{2} = activeRover(1, [3, 1], [20.5, 4], 0.1, "Four Wheel");
-refRover{2} = referenceRover(1, [3, 1], [20.5, 4], 0.1, "Four Wheel");
-rover{3} = activeRover(1, [3, 1], [19, 3], 0.1, "Four Wheel");
-refRover{3} = referenceRover(1, [3, 1], [19, 3], 0.1, "Four Wheel");
-rover{4} = activeRover(1, [4, 1], [17.5, 2], 0.1, "Four Wheel");
-refRover{4} = referenceRover(1, [4, 1], [17.5, 2], 0.1, "Four Wheel");
+rover{1} = activeRover(1, [1, 1], [22, 1], 0.1, "Four Wheel");
+refRover{1} = referenceRover(1, [1, 1], [22, 1], 0.1, "Four Wheel");
+rover{2} = activeRover(1, [2, 1], [20.5,1], 0.1, "Four Wheel");
+refRover{2} = referenceRover(1, [2, 1], [20.5, 1], 0.1, "Four Wheel");
+rover{3} = activeRover(1, [3, 1], [19, 1], 0.1, "Four Wheel");
+refRover{3} = referenceRover(1, [3, 1], [19, 1], 0.1, "Four Wheel");
+rover{4} = activeRover(1, [4, 1], [17.5, 1], 0.1, "Four Wheel");
+refRover{4} = referenceRover(1, [4, 1], [17.5, 1], 0.1, "Four Wheel");
 rover{5} = activeRover(1, [5, 1], [16, 1], 0.1, "Four Wheel");
 refRover{5} = referenceRover(1, [5, 1], [16, 1], 0.1, "Four Wheel");
 
@@ -138,41 +138,45 @@ for roverNo = 1:1:length(rover)
             plannedXOut = [];
             % Check new path against previous rover paths
             for j = 1:1:roverNo-1
-                % If comparison rover has a longer path
-                if width(plannedPath{roverNo}.xLocation) <= width(plannedPath{j}.xLocation)
-                    for k = 1:1:width(plannedPath{j}.xLocation)
-                        % Find the distance between both rovers 
-                        if k <= width(plannedPath{roverNo}.xLocation)
-                            distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(k))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(k))^2);
-                        else
-                            distance = sqrt((plannedPath{roverNo}.xLocation(end)-plannedPath{j}.xLocation(k))^2+(plannedPath{roverNo}.yLocation(end)-plannedPath{j}.yLocation(k))^2);
+                if crashTrue == 0
+                    % If comparison rover has a longer path
+                    if width(plannedPath{roverNo}.xLocation) <= width(plannedPath{j}.xLocation)
+                        for k = 1:1:width(plannedPath{j}.xLocation)
+                            % Find the distance between both rovers 
+                            if k <= width(plannedPath{roverNo}.xLocation)
+                                distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(k))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(k))^2);
+                            else
+                                distance = sqrt((plannedPath{roverNo}.xLocation(end)-plannedPath{j}.xLocation(k))^2+(plannedPath{roverNo}.yLocation(end)-plannedPath{j}.yLocation(k))^2);
+                            end 
+                            % If collision detected, mark path as unsafe and
+                            % break from loop 
+                            if distance <= 0.35
+                                crashTrue = 1;
+                                safePath = 0;
+                                fprintf("Debug Message: Rovers %i  & %i collided at %0.2f s. \n", roverNo,j,(k*stepSize))
+                                break
+                            end 
                         end 
-                        % If collision detected, mark path as unsafe and
-                        % break from loop 
-                        if distance <= 0.35
-                            crashTrue = 1;
-                            safePath = 0;
-                            break
+                    % If current rover has a longer path 
+                    else
+                        for k = 1:1:width(plannedPath{roverNo}.xLocation)
+                            % Find the distance between both rovers 
+                            if k <= width(plannedPath{j}.xLocation)
+                                distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(k))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(k))^2);
+                            else
+                                distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(end))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(end))^2);
+                            end 
+                            % If collision detected, mark path as unsafe and
+                            % break from loop 
+                            if distance <= 0.35
+                                crashTrue = 1;
+                                safePath = 0;
+                                fprintf("Debug Message: Rovers %i  & %i collided at %0.2f s. \n", roverNo,j,(k*stepSize))
+                                break
+                            end 
                         end 
-                    end 
-                % If current rover has a longer path 
-                else
-                    for k = 1:1:width(plannedPath{roverNo}.xLocation)
-                        % Find the distance between both rovers 
-                        if k <= width(plannedPath{j}.xLocation)
-                            distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(k))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(k))^2);
-                        else
-                            distance = sqrt((plannedPath{roverNo}.xLocation(k)-plannedPath{j}.xLocation(end))^2 + (plannedPath{roverNo}.yLocation(k)-plannedPath{j}.yLocation(end))^2);
-                        end 
-                        % If collision detected, mark path as unsafe and
-                        % break from loop 
-                        if distance <= 0.35
-                            crashTrue = 1;
-                            safePath = 0;
-                            break
-                        end 
-                    end 
-                end  
+                    end  
+                end 
             end 
             % Mark path as safe or unsafe
             if crashTrue == 0 
@@ -181,7 +185,6 @@ for roverNo = 1:1:length(rover)
                 break
             else 
                 pathCount = pathCount + 1;
-                break
             end
         end 
     end 
@@ -199,12 +202,9 @@ for n = 1:1:width(rover)
 end 
 
 % Store Data 
-% filename = '2021_12_07_Test_Set_Path_Generation_V1.xlsx';
-% writematrix(dataVariableName,filename,'Sheet',testNo,'Range','B2:B126')
+filename = '2021_12_07_Test_Set_Path_Generation_V1.xlsx';
+writematrix(waypoints,filename,'Sheet',5)
 
-% Required Data
-% Test No i.e. sheet number 
-% Coords for each rover 
 
 
 
